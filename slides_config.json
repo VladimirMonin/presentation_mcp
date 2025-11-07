@@ -22,6 +22,15 @@
         "images/Карточка_расширения_Cline_в_VS_Code.png",
         "images/Карточка_расширения_Excalidraw_в_VS_Code.png"
       ]
+    },
+    {
+      "layout_type": "two_tall_row",
+      "title": "Спасибо за внимание!",
+      "notes_text": "Если есть вопросы, задавайте их сейчас.",
+      "images": [
+        "images/Список_расширений_VS_Code_для_Python.png",
+        "images/Список_расширений_VS_Code_для_Python.png"
+      ]
     }
   ]
 }

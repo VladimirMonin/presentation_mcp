@@ -45,12 +45,23 @@ STACK_1_LEFT = Cm(10.16)
 STACK_1_TOP = Cm(3.47)
 STACK_1_MAX_WIDTH = Cm(18.4)
 STACK_1_MAX_HEIGHT = Cm(3.91)
-
 # 2-я (нижняя) картинка
 STACK_2_LEFT = Cm(10.16)
 STACK_2_TOP = Cm(11)
 STACK_2_MAX_WIDTH = Cm(18.07)
 STACK_2_MAX_HEIGHT = Cm(4.58)
+
+# --- (НОВЫЙ!) Макет 'two_tall_row' (2 высоких рядом) ---
+# 1-я (левая) картинка
+ROW_1_LEFT = Cm(10.2)
+ROW_1_TOP = Cm(2.4)
+ROW_1_MAX_WIDTH = Cm(10.5)
+ROW_1_MAX_HEIGHT = Cm(14.5)
+# 2-я (правая) картинка
+ROW_2_LEFT = Cm(21.89)
+ROW_2_TOP = Cm(2.4)
+ROW_2_MAX_WIDTH = Cm(10.5)
+ROW_2_MAX_HEIGHT = Cm(14.5)
 
 # -----------------------------------------------------------------
 
@@ -235,6 +246,44 @@ def generate_presentation(slide_data: list, template_path: str, output_path: str
                     img_path_2, STACK_2_LEFT, STACK_2_TOP, width=width2, height=height2
                 )
                 print("  ...Картинка 2 'stack' добавлена.")
+            else:
+                print(f"  ОШИБКА: Не смог добавить картинку {img_path_2}, пропуск.")
+
+        elif (
+            layout_type == "two_tall_row" and len(images) >= 2
+        ):  # <<<--- НАШ НОВЫЙ БЛОК
+            img_path_1 = images[0]
+            img_path_2 = images[1]
+
+            # 1-я (левая) картинка
+            print(f"  ...Вычисляю 'smart' размеры для (row 1): {img_path_1}")
+            width1, height1 = get_smart_dimensions(
+                img_path_1, ROW_1_MAX_WIDTH, ROW_1_MAX_HEIGHT
+            )
+            if width1 is not None or height1 is not None:
+                print(
+                    f"  ...Добавляю картинку 1 (row): {img_path_1} (w:{width1}, h:{height1})"
+                )
+                slide.shapes.add_picture(
+                    img_path_1, ROW_1_LEFT, ROW_1_TOP, width=width1, height=height1
+                )
+                print("  ...Картинка 1 'row' добавлена.")
+            else:
+                print(f"  ОШИБКА: Не смог добавить картинку {img_path_1}, пропуск.")
+
+            # 2-я (правая) картинка
+            print(f"  ...Вычисляю 'smart' размеры для (row 2): {img_path_2}")
+            width2, height2 = get_smart_dimensions(
+                img_path_2, ROW_2_MAX_WIDTH, ROW_2_MAX_HEIGHT
+            )
+            if width2 is not None or height2 is not None:
+                print(
+                    f"  ...Добавляю картинку 2 (row): {img_path_2} (w:{width2}, h:{height2})"
+                )
+                slide.shapes.add_picture(
+                    img_path_2, ROW_2_LEFT, ROW_2_TOP, width=width2, height=height2
+                )
+                print("  ...Картинка 2 'row' добавлена.")
             else:
                 print(f"  ОШИБКА: Не смог добавить картинку {img_path_2}, пропуск.")
 
