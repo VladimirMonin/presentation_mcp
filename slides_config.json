@@ -1,0 +1,25 @@
+{
+  "slides": [
+    {
+      "title": "Качаем VS Code",
+      "notes_text": "Сейчас мы должны скачать VS Code\n- Пункт 1 - Скачать \n- Пункт 2 - Установить",
+      "images": ["images/Страница_загрузки_Visual_Studio_Code_с_вариантами_для_Windows_Linux_и_Mac.png"],
+      "layout_type": "single"
+    },
+    {
+      "title": "Обзор расширений VS Code",
+      "notes_text": "Вот такие есть расширения для Python в VS Code...",
+      "images": ["images/Список_расширений_VS_Code_для_Python.png"],
+      "layout_type": "single"
+    },
+    {
+      "title": "Cline и Excalidraw",
+      "notes_text": "На двух скриншотах мы видим... (полный текст)",
+      "images": [
+        "images/Карточка_расширения_Cline_в_VS_Code.png",
+        "images/Карточка_расширения_Excalidraw_в_VS_Code.png"
+      ],
+      "layout_type": "two_horizontal_stack"
+    }
+  ]
+}
