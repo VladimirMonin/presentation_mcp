@@ -13,7 +13,7 @@ from cli import parse_args
 def main():
     """
     Главная функция CLI.
-    
+
     Парсит аргументы командной строки и выполняет соответствующую команду.
     """
     return parse_args(sys.argv[1:])

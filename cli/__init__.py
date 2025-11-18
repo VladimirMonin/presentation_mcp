@@ -14,8 +14,8 @@ from .commands import (
 )
 
 __all__ = [
-    'cmd_generate',
-    'cmd_analyze',
-    'cmd_help',
-    'parse_args',
+    "cmd_generate",
+    "cmd_analyze",
+    "cmd_help",
+    "parse_args",
 ]
