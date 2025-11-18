@@ -19,10 +19,10 @@ from .layout_registry import (
 )
 
 __all__ = [
-    'SlideConfig',
-    'PresentationConfig',
-    'validate_config',
-    'ImagePlacement',
-    'LayoutBlueprint',
-    'LayoutRegistry',
+    "SlideConfig",
+    "PresentationConfig",
+    "validate_config",
+    "ImagePlacement",
+    "LayoutBlueprint",
+    "LayoutRegistry",
 ]

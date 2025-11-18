@@ -12,7 +12,7 @@ from .config_loader import ConfigLoader
 from .resource_loader import ResourceLoader
 
 __all__ = [
-    'PathResolver',
-    'ConfigLoader',
-    'ResourceLoader',
+    "PathResolver",
+    "ConfigLoader",
+    "ResourceLoader",
 ]
