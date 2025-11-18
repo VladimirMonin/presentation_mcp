@@ -20,10 +20,10 @@ from .image_processor import (
 )
 
 __all__ = [
-    'clean_markdown_for_notes',
-    'clean_markdown_preserve_structure',
-    'validate_markdown',
-    'calculate_smart_dimensions',
-    'get_image_info',
-    'validate_image',
+    "clean_markdown_for_notes",
+    "clean_markdown_preserve_structure",
+    "validate_markdown",
+    "calculate_smart_dimensions",
+    "get_image_info",
+    "validate_image",
 ]
