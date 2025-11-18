@@ -255,9 +255,11 @@ class PresentationBuilder:
                 
                 # Автоматическая конвертация WebP → PNG
                 original_path = img_path
+                temp_png_path = None  # Путь к временному PNG файлу
                 if img_path.suffix.lower() == '.webp':
                     try:
-                        img_path = convert_webp_to_png(img_path)
+                        temp_png_path = convert_webp_to_png(img_path)
+                        img_path = temp_png_path
                         if self.verbose:
                             print(f"    🔄 WebP сконвертирован в PNG: {original_path.name}")
                     except Exception as e:
@@ -286,6 +288,16 @@ class PresentationBuilder:
                 slide.shapes.add_picture(
                     str(img_path), left_cm, top_cm, width=width_cm, height=height_cm
                 )
+                
+                # Удаление временного PNG файла после вставки
+                if temp_png_path and temp_png_path.exists():
+                    try:
+                        temp_png_path.unlink()
+                        if self.verbose:
+                            print(f"    🗑 Временный файл удалён: {temp_png_path.name}")
+                    except Exception as e:
+                        if self.verbose:
+                            print(f"    ⚠ Не удалось удалить временный файл {temp_png_path.name}: {e}")
 
             except FileNotFoundError:
                 # Изображение не найдено - добавляем в ошибки, но продолжаем
@@ -293,6 +305,9 @@ class PresentationBuilder:
                 self._errors.append(error_msg)
                 if self.verbose:
                     print(f"    ✗ {error_msg}")
+                # Удаляем временный файл, если был создан
+                if temp_png_path and temp_png_path.exists():
+                    temp_png_path.unlink()
 
             except Exception as e:
                 # Другая ошибка при добавлении изображения
@@ -300,6 +315,9 @@ class PresentationBuilder:
                 self._errors.append(error_msg)
                 if self.verbose:
                     print(f"    ✗ {error_msg}")
+                # Удаляем временный файл, если был создан
+                if temp_png_path and temp_png_path.exists():
+                    temp_png_path.unlink()
 
     @staticmethod
     def _find_layout(prs: Presentation, layout_name: str):
