@@ -1,0 +1,19 @@
+{
+  "template_path": "template.pptx",
+  "layout_name": "VideoLayout",
+  "output_path": "output.pptx",
+  "slides": [
+    {
+      "layout_type": "single_wide",
+      "title": "Первый слайд",
+      "notes_text": "Заметки к первому слайду",
+      "images": ["images/photo1.jpg"]
+    },
+    {
+      "layout_type": "two_stack",
+      "title": "Второй слайд",
+      "notes_text": "Заметки ко второму слайду",
+      "images": ["images/photo2.jpg", "images/photo3.jpg"]
+    }
+  ]
+}
