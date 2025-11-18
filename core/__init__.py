@@ -18,6 +18,8 @@ from .image_processor import (
     get_image_info,
     validate_image,
 )
+from .presentation_builder import PresentationBuilder
+from .template_analyzer import analyze_template, list_layouts
 
 __all__ = [
     "clean_markdown_for_notes",
@@ -26,4 +28,7 @@ __all__ = [
     "calculate_smart_dimensions",
     "get_image_info",
     "validate_image",
+    "PresentationBuilder",
+    "analyze_template",
+    "list_layouts",
 ]

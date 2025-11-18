@@ -1,0 +1,317 @@
+"""
+Построитель презентаций PowerPoint.
+
+Этот модуль содержит главный оркестратор, который собирает все компоненты
+вместе для генерации итоговой презентации.
+"""
+
+from pathlib import Path
+from typing import Optional
+from pptx import Presentation
+from pptx.util import Cm
+
+from models import PresentationConfig, SlideConfig, LayoutRegistry
+from io_handlers import ResourceLoader
+from core import clean_markdown_for_notes, calculate_smart_dimensions
+from config import PLACEHOLDER_TITLE_IDX, PLACEHOLDER_SLIDE_NUM_IDX
+
+
+class PresentationBuilder:
+    """
+    Оркестратор сборки презентации из конфигурации.
+    
+    Основной компонент, который:
+    1. Загружает шаблон PPTX
+    2. Создаёт слайды согласно конфигурации
+    3. Размещает контент (текст, изображения, заметки)
+    4. Сохраняет итоговый файл
+    
+    Attributes:
+        layout_registry: Реестр макетов для размещения изображений.
+        resource_loader: Загрузчик ресурсов (MD файлов, изображений).
+        idx_title: Индекс заполнителя для заголовка.
+        idx_slide_num: Индекс заполнителя для номера слайда.
+    
+    Example:
+        >>> from models import LayoutRegistry
+        >>> from io_handlers import ResourceLoader, PathResolver
+        >>> from config import register_default_layouts
+        >>> 
+        >>> resolver = PathResolver(Path("config.json"))
+        >>> loader = ResourceLoader(resolver)
+        >>> registry = LayoutRegistry()
+        >>> register_default_layouts(registry)
+        >>> 
+        >>> builder = PresentationBuilder(registry, loader)
+        >>> prs = builder.build(config, Path("template.pptx"))
+        >>> builder.save(prs, Path("output.pptx"))
+    """
+    
+    def __init__(
+        self,
+        layout_registry: LayoutRegistry,
+        resource_loader: ResourceLoader,
+        idx_title: int = PLACEHOLDER_TITLE_IDX,
+        idx_slide_num: int = PLACEHOLDER_SLIDE_NUM_IDX,
+        verbose: bool = True
+    ):
+        """
+        Инициализация построителя.
+        
+        Args:
+            layout_registry: Реестр макетов слайдов.
+            resource_loader: Загрузчик ресурсов.
+            idx_title: Индекс заполнителя заголовка (по умолчанию из config).
+            idx_slide_num: Индекс заполнителя номера слайда.
+            verbose: Выводить ли подробные сообщения о процессе.
+        """
+        self.layouts = layout_registry
+        self.loader = resource_loader
+        self.idx_title = idx_title
+        self.idx_slide_num = idx_slide_num
+        self.verbose = verbose
+        
+        self._errors = []  # Список ошибок, накопленных в процессе
+    
+    def build(
+        self,
+        config: PresentationConfig,
+        template_path: Path
+    ) -> Optional[Presentation]:
+        """
+        Главный метод сборки презентации.
+        
+        Args:
+            config: Конфигурация презентации.
+            template_path: Путь к файлу шаблона .pptx.
+        
+        Returns:
+            Объект Presentation или None при критической ошибке.
+        
+        Raises:
+            FileNotFoundError: Если шаблон не найден.
+            ValueError: Если макет не найден в шаблоне.
+        """
+        self._errors = []  # Сброс ошибок
+        
+        # Шаг 1: Загрузка шаблона
+        if self.verbose:
+            print(f"📄 Загрузка шаблона: {template_path}")
+        
+        try:
+            prs = Presentation(str(template_path))
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Шаблон не найден: {template_path}")
+        except Exception as e:
+            raise ValueError(f"Ошибка загрузки шаблона: {e}")
+        
+        # Шаг 2: Поиск макета в шаблоне
+        slide_layout = self._find_layout(prs, config.layout_name)
+        
+        if not slide_layout:
+            raise ValueError(
+                f"Макет '{config.layout_name}' не найден в шаблоне. "
+                f"Доступные макеты: {[layout.name for layout in prs.slide_layouts]}"
+            )
+        
+        # Шаг 3: Применение workaround для PowerPoint 2013
+        # (Инициализация notes_slide для всех существующих слайдов)
+        for slide in prs.slides:
+            _ = slide.notes_slide
+        
+        # Шаг 4: Создание слайдов
+        if self.verbose:
+            print(f"\n🔨 Создание {len(config.slides)} слайдов...")
+        
+        for i, slide_cfg in enumerate(config.slides, 1):
+            try:
+                self._add_slide(prs, slide_layout, slide_cfg, i)
+                if self.verbose:
+                    print(f"  ✓ Слайд {i}: '{slide_cfg.title}'")
+            except Exception as e:
+                error_msg = f"Ошибка при создании слайда {i} ('{slide_cfg.title}'): {e}"
+                self._errors.append(error_msg)
+                if self.verbose:
+                    print(f"  ✗ {error_msg}")
+        
+        # Шаг 5: Вывод итогов
+        if self._errors:
+            print(f"\n⚠ Завершено с {len(self._errors)} ошибками:")
+            for err in self._errors:
+                print(f"  - {err}")
+        elif self.verbose:
+            print("\n✅ Презентация успешно собрана!")
+        
+        return prs
+    
+    def save(self, prs: Presentation, output_path: Path) -> None:
+        """
+        Сохраняет презентацию в файл.
+        
+        Args:
+            prs: Объект презентации для сохранения.
+            output_path: Путь для сохранения файла.
+        
+        Raises:
+            IOError: Если не удалось сохранить файл.
+        """
+        try:
+            prs.save(str(output_path))
+            if self.verbose:
+                print(f"\n💾 Сохранено: {output_path}")
+        except Exception as e:
+            raise IOError(f"Ошибка сохранения презентации: {e}")
+    
+    def get_errors(self) -> list:
+        """
+        Возвращает список ошибок, накопленных в процессе сборки.
+        
+        Returns:
+            Список строк с описаниями ошибок.
+        """
+        return self._errors.copy()
+    
+    def _add_slide(
+        self,
+        prs: Presentation,
+        layout,
+        cfg: SlideConfig,
+        number: int
+    ) -> None:
+        """
+        Добавляет один слайд в презентацию.
+        
+        Args:
+            prs: Объект презентации.
+            layout: Макет слайда из шаблона.
+            cfg: Конфигурация слайда.
+            number: Номер слайда (для отображения).
+        """
+        # Создание слайда
+        slide = prs.slides.add_slide(layout)
+        
+        # Workaround для PowerPoint 2013
+        _ = slide.notes_slide
+        
+        # 1. Заголовок
+        try:
+            title_ph = slide.shapes.placeholders[self.idx_title]
+            title_ph.text_frame.text = cfg.title
+        except KeyError:
+            raise KeyError(
+                f"Заполнитель заголовка с индексом {self.idx_title} не найден"
+            )
+        
+        # 2. Номер слайда
+        try:
+            num_ph = slide.shapes.placeholders[self.idx_slide_num]
+            num_ph.text_frame.text = str(number)
+        except KeyError:
+            # Номер не критичен, можно продолжить
+            if self.verbose:
+                print(f"    ⚠ Заполнитель номера ({self.idx_slide_num}) не найден")
+        
+        # 3. Заметки докладчика
+        notes_text = self.loader.load_notes(cfg.notes_source)
+        clean_notes = clean_markdown_for_notes(notes_text)
+        slide.notes_slide.notes_text_frame.text = clean_notes
+        
+        # 4. Изображения
+        self._place_images(slide, cfg)
+    
+    def _place_images(self, slide, cfg: SlideConfig) -> None:
+        """
+        Размещает изображения на слайде согласно макету.
+        
+        Args:
+            slide: Объект слайда.
+            cfg: Конфигурация слайда.
+        """
+        if not cfg.images:
+            return  # Нет изображений - пропускаем
+        
+        # Получаем чертёж макета
+        try:
+            blueprint = self.layouts.get(cfg.layout_type)
+        except KeyError:
+            raise KeyError(
+                f"Макет '{cfg.layout_type}' не зарегистрирован. "
+                f"Доступные: {self.layouts.list_all()}"
+            )
+        
+        # Проверка количества изображений
+        if len(cfg.images) < blueprint.required_images:
+            if self.verbose:
+                print(
+                    f"    ⚠ Ожидалось {blueprint.required_images} изображений, "
+                    f"предоставлено {len(cfg.images)}"
+                )
+        
+        # Размещение каждого изображения
+        for i, img_path_str in enumerate(cfg.images):
+            if i >= len(blueprint.placements):
+                # Больше изображений, чем размещений - игнорируем лишние
+                if self.verbose:
+                    print(f"    ⚠ Изображение #{i+1} игнорируется (нет размещения)")
+                break
+            
+            try:
+                # Разрешение пути к изображению
+                img_path = self.loader.resolve_image(img_path_str)
+                
+                # Получение параметров размещения
+                placement = blueprint.placements[i]
+                placement_dict = placement.to_dict()
+                
+                # Умное масштабирование
+                width, height = calculate_smart_dimensions(
+                    img_path,
+                    placement_dict['max_width'],
+                    placement_dict['max_height']
+                )
+                
+                # Конвертация в единицы python-pptx
+                left_cm = Cm(placement_dict['left'])
+                top_cm = Cm(placement_dict['top'])
+                width_cm = Cm(width) if width is not None else None
+                height_cm = Cm(height) if height is not None else None
+                
+                # Добавление изображения на слайд
+                slide.shapes.add_picture(
+                    str(img_path),
+                    left_cm,
+                    top_cm,
+                    width=width_cm,
+                    height=height_cm
+                )
+                
+            except FileNotFoundError:
+                # Изображение не найдено - добавляем в ошибки, но продолжаем
+                error_msg = f"Изображение не найдено: {img_path_str}"
+                self._errors.append(error_msg)
+                if self.verbose:
+                    print(f"    ✗ {error_msg}")
+            
+            except Exception as e:
+                # Другая ошибка при добавлении изображения
+                error_msg = f"Ошибка добавления изображения {img_path_str}: {e}"
+                self._errors.append(error_msg)
+                if self.verbose:
+                    print(f"    ✗ {error_msg}")
+    
+    @staticmethod
+    def _find_layout(prs: Presentation, layout_name: str):
+        """
+        Ищет макет по имени в шаблоне.
+        
+        Args:
+            prs: Объект презентации.
+            layout_name: Имя макета для поиска.
+        
+        Returns:
+            Объект макета или None, если не найден.
+        """
+        for layout in prs.slide_layouts:
+            if layout.name == layout_name:
+                return layout
+        return None
