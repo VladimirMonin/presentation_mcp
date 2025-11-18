@@ -7,30 +7,16 @@ Auto-Slide: PowerPoint Automation Pipeline
 """
 
 import sys
+from cli import parse_args
 
 
 def main():
     """
     Главная функция CLI.
-
-    TODO: Интеграция с cli.commands после реализации CLI модуля.
+    
+    Парсит аргументы командной строки и выполняет соответствующую команду.
     """
-    print("Auto-Slide: PowerPoint Automation Pipeline")
-    print("=" * 50)
-    print()
-    print("Статус: В разработке (Этап 1 завершён)")
-    print("Структура пакетов создана:")
-    print("  ✓ config/")
-    print("  ✓ core/")
-    print("  ✓ models/")
-    print("  ✓ io_handlers/")
-    print("  ✓ cli/")
-    print()
-    print("Следующий шаг: Реализация моделей данных (Этап 2)")
-    print()
-    print("Для продолжения разработки см. doc/plan/refactor_plan.md")
-
-    return 0
+    return parse_args(sys.argv[1:])
 
 
 if __name__ == "__main__":
