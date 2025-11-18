@@ -26,6 +26,9 @@ ENV/
 .env
 .env.local
 
+# MCP Configuration (contains local paths)
+cline_mcp_settings.json
+
 # Output files
 *.pptx
 !template.pptx  # keep template

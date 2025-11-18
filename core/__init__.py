@@ -17,6 +17,7 @@ from .image_processor import (
     calculate_smart_dimensions,
     get_image_info,
     validate_image,
+    convert_webp_to_png,
 )
 from .presentation_builder import PresentationBuilder
 from .template_analyzer import analyze_template, list_layouts

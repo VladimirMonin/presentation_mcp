@@ -12,7 +12,7 @@ from pptx.util import Cm
 
 from models import PresentationConfig, SlideConfig, LayoutRegistry
 from io_handlers import ResourceLoader
-from core import clean_markdown_for_notes, calculate_smart_dimensions
+from core import clean_markdown_for_notes, calculate_smart_dimensions, convert_webp_to_png
 from config import PLACEHOLDER_TITLE_IDX, PLACEHOLDER_SLIDE_NUM_IDX
 
 
@@ -252,6 +252,20 @@ class PresentationBuilder:
             try:
                 # Разрешение пути к изображению
                 img_path = self.loader.resolve_image(img_path_str)
+                
+                # Автоматическая конвертация WebP → PNG
+                original_path = img_path
+                if img_path.suffix.lower() == '.webp':
+                    try:
+                        img_path = convert_webp_to_png(img_path)
+                        if self.verbose:
+                            print(f"    🔄 WebP сконвертирован в PNG: {original_path.name}")
+                    except Exception as e:
+                        error_msg = f"Ошибка конвертации WebP {img_path_str}: {e}"
+                        self._errors.append(error_msg)
+                        if self.verbose:
+                            print(f"    ✗ {error_msg}")
+                        continue
 
                 # Получение параметров размещения
                 placement = blueprint.placements[i]

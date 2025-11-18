@@ -7,11 +7,66 @@
 
 from pathlib import Path
 from typing import Tuple, Optional
+import tempfile
 
 try:
     from PIL import Image
 except ImportError:
     Image = None  # Graceful degradation
+
+
+def convert_webp_to_png(image_path: Path) -> Path:
+    """
+    Конвертирует WebP изображение в PNG для совместимости с python-pptx.
+    
+    python-pptx поддерживает только: BMP, GIF, JPEG, PNG, TIFF, WMF.
+    WebP не поддерживается, поэтому конвертируем его в PNG.
+    
+    Args:
+        image_path: Путь к WebP изображению.
+        
+    Returns:
+        Путь к временному PNG файлу.
+        
+    Raises:
+        ImportError: Если Pillow не установлен.
+        ValueError: Если файл не является WebP.
+    """
+    if Image is None:
+        raise ImportError("Pillow требуется для конвертации WebP изображений")
+    
+    if image_path.suffix.lower() != '.webp':
+        raise ValueError(f"Файл не является WebP: {image_path}")
+    
+    # Открываем WebP
+    with Image.open(image_path) as img:
+        # Конвертируем в RGB если нужно (для прозрачности)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            # Создаём белый фон для прозрачных изображений
+            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            rgb_img.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+            img = rgb_img
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Создаём временный PNG файл
+        # Используем ту же директорию что и исходный файл для доступности
+        temp_dir = image_path.parent
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix='.png',
+            prefix=f'{image_path.stem}_',
+            dir=temp_dir,
+            delete=False
+        )
+        temp_path = Path(temp_file.name)
+        temp_file.close()
+        
+        # Сохраняем как PNG
+        img.save(temp_path, 'PNG', optimize=True)
+        
+    return temp_path
 
 
 def calculate_smart_dimensions(
