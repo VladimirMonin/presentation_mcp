@@ -7,19 +7,13 @@
       "title": "Сравнение изображений",
       "slide_number": "1",
       "notes_source": "Демонстрация макета с двумя изображениями расположенными вертикально",
-      "images": [
-        "images/before.jpg",
-        "images/after.jpg"
-      ]
+      "images": ["images/before.jpg", "images/after.jpg"]
     },
     {
       "title": "Варианты дизайна",
       "slide_number": "2",
       "notes_source": "doc/samples/design_notes.md",
-      "images": [
-        "images/variant1.png",
-        "images/variant2.png"
-      ]
+      "images": ["images/variant1.png", "images/variant2.png"]
     }
   ]
 }
