@@ -1,0 +1,41 @@
+{
+  "template_path": "c:\\PY\\presentation_mcp\\template.pptx",
+  "layout_name": "VideoLayout",
+  "output_path": "c:\\PY\\presentation_mcp\\output.pptx",
+  "slides": [
+    {
+      "layout_type": "single_wide",
+      "title": "Качаем VS Code",
+      "notes_source": "Сейчас мы должны скачать VS Code\n- Пункт 1 - Скачать\n- Пункт 2 - Установить",
+      "images": [
+        "c:\\PY\\presentation_mcp\\images\\Страница_загрузки_Visual_Studio_Code_с_вариантами_для_Windows_Linux_и_Mac.png"
+      ]
+    },
+    {
+      "layout_type": "single_tall",
+      "title": "Обзор расширений VS Code",
+      "notes_source": "Вот такие есть расширения для Python в VS Code...",
+      "images": [
+        "c:\\PY\\presentation_mcp\\images\\Список_расширений_VS_Code_для_Python.png"
+      ]
+    },
+    {
+      "layout_type": "two_stack",
+      "title": "Cline и Excalidraw",
+      "notes_source": "На двух скриншотах мы видим расширения Cline и Excalidraw для VS Code.",
+      "images": [
+        "c:\\PY\\presentation_mcp\\images\\Карточка_расширения_Cline_в_VS_Code.png",
+        "c:\\PY\\presentation_mcp\\images\\Карточка_расширения_Excalidraw_в_VS_Code.png"
+      ]
+    },
+    {
+      "layout_type": "two_tall_row",
+      "title": "Спасибо за внимание!",
+      "notes_source": "Если есть вопросы, задавайте их сейчас.",
+      "images": [
+        "c:\\PY\\presentation_mcp\\images\\Список_расширений_VS_Code_для_Python.png",
+        "c:\\PY\\presentation_mcp\\images\\Список_расширений_VS_Code_для_Python.png"
+      ]
+    }
+  ]
+}
