@@ -1,0 +1,19 @@
+{
+  "template_path": "C:/Templates/corporate_template.pptx",
+  "layout_name": "single_tall",
+  "output_path": "C:/Output/presentation.pptx",
+  "slides": [
+    {
+      "title": "Слайд с абсолютными путями",
+      "slide_number": "1",
+      "notes_source": "C:/Documents/notes.md",
+      "images": ["C:/Images/logo.png"]
+    },
+    {
+      "title": "Слайд с относительными путями",
+      "slide_number": "2",
+      "notes_source": "notes/slide2.md",
+      "images": ["images/diagram.svg"]
+    }
+  ]
+}

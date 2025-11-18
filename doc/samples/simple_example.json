@@ -1,0 +1,19 @@
+{
+  "template_path": "template.pptx",
+  "layout_name": "single_wide",
+  "output_path": "output.pptx",
+  "slides": [
+    {
+      "title": "Первый слайд",
+      "slide_number": "1",
+      "notes_source": "doc/samples/notes1.md",
+      "images": ["images/photo1.jpg"]
+    },
+    {
+      "title": "Второй слайд",
+      "slide_number": "2",
+      "notes_source": "doc/samples/notes2.md",
+      "images": ["images/photo2.jpg"]
+    }
+  ]
+}
