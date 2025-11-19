@@ -78,6 +78,23 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
     )
     registry.register(two_tall_row)
 
+    # Макет 5: Три изображения друг под другом (вертикальный стек)
+    # Используется для последовательного показа шагов или сравнения трёх элементов
+    three_stack = LayoutBlueprint(
+        name="three_stack",
+        description="Три изображения друг под другом (вертикальный стек)",
+        required_images=3,
+        placements=[
+            # Верхнее изображение
+            ImagePlacement(left=10.16, top=3.0, max_width=18.4, max_height=4.0),
+            # Среднее изображение
+            ImagePlacement(left=10.16, top=7.5, max_width=18.4, max_height=4.0),
+            # Нижнее изображение
+            ImagePlacement(left=10.16, top=12.0, max_width=18.4, max_height=4.0),
+        ],
+    )
+    registry.register(three_stack)
+
 
 # Константы для работы с шаблоном
 DEFAULT_TEMPLATE_PATH = "template.pptx"

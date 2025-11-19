@@ -12,7 +12,11 @@ from pptx.util import Cm
 
 from models import PresentationConfig, SlideConfig, LayoutRegistry
 from io_handlers import ResourceLoader
-from core import clean_markdown_for_notes, calculate_smart_dimensions, convert_webp_to_png
+from core import (
+    clean_markdown_for_notes,
+    calculate_smart_dimensions,
+    convert_webp_to_png,
+)
 from config import PLACEHOLDER_TITLE_IDX, PLACEHOLDER_SLIDE_NUM_IDX
 
 
@@ -249,19 +253,23 @@ class PresentationBuilder:
                     print(f"    ⚠ Изображение #{i + 1} игнорируется (нет размещения)")
                 break
 
+            # Инициализация переменной для временного файла вне try-блока
+            temp_png_path = None
+
             try:
                 # Разрешение пути к изображению
                 img_path = self.loader.resolve_image(img_path_str)
-                
+
                 # Автоматическая конвертация WebP → PNG
                 original_path = img_path
-                temp_png_path = None  # Путь к временному PNG файлу
-                if img_path.suffix.lower() == '.webp':
+                if img_path.suffix.lower() == ".webp":
                     try:
                         temp_png_path = convert_webp_to_png(img_path)
                         img_path = temp_png_path
                         if self.verbose:
-                            print(f"    🔄 WebP сконвертирован в PNG: {original_path.name}")
+                            print(
+                                f"    🔄 WebP сконвертирован в PNG: {original_path.name}"
+                            )
                     except Exception as e:
                         error_msg = f"Ошибка конвертации WebP {img_path_str}: {e}"
                         self._errors.append(error_msg)
@@ -288,7 +296,7 @@ class PresentationBuilder:
                 slide.shapes.add_picture(
                     str(img_path), left_cm, top_cm, width=width_cm, height=height_cm
                 )
-                
+
                 # Удаление временного PNG файла после вставки
                 if temp_png_path and temp_png_path.exists():
                     try:
@@ -297,7 +305,9 @@ class PresentationBuilder:
                             print(f"    🗑 Временный файл удалён: {temp_png_path.name}")
                     except Exception as e:
                         if self.verbose:
-                            print(f"    ⚠ Не удалось удалить временный файл {temp_png_path.name}: {e}")
+                            print(
+                                f"    ⚠ Не удалось удалить временный файл {temp_png_path.name}: {e}"
+                            )
 
             except FileNotFoundError:
                 # Изображение не найдено - добавляем в ошибки, но продолжаем
