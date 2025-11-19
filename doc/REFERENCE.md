@@ -131,7 +131,7 @@ generate_presentation("C:/projects/my_slides.json")
 ### Подробная документация по MCP
 
 - **Руководство по использованию:** [`MCP_USAGE.md`](MCP_USAGE.md)
-- **Создание MCP инструментов:** [`doc/mcp-tools-guide.md`](doc/mcp-tools-guide.md)
+- **Создание MCP инструментов:** [`mcp-tools-guide.md`](mcp-tools-guide.md)
 
 ---
 
@@ -142,14 +142,15 @@ generate_presentation("C:/projects/my_slides.json")
 ```json
 {
   "template_path": "<путь к шаблону PPTX>",
-  "layout_name": "<имя макета из template>",
+  "layout_name": "<имя макета из template по умолчанию>",
   "output_path": "<путь к выходному файлу>",
   "slides": [
     {
+      "layout_type": "<тип макета: single_wide, two_stack и т.д.>",
       "title": "<заголовок слайда>",
-      "slide_number": "<номер слайда>",
       "notes_source": "<путь к MD файлу или inline текст>",
-      "images": ["<путь к изображению 1>", "<путь к изображению 2>"]
+      "images": ["<путь к изображению 1>", "<путь к изображению 2>"],
+      "layout_name": "<опционально: переопределить макет для этого слайда>"
     }
   ]
 }
@@ -157,17 +158,74 @@ generate_presentation("C:/projects/my_slides.json")
 
 ### Обязательные поля
 
+**На уровне презентации:**
+
 - `template_path` — путь к шаблону PowerPoint
-- `layout_name` — имя макета (должен существовать в шаблоне)
+- `layout_name` — имя макета по умолчанию (должен существовать в шаблоне)
 - `slides` — массив слайдов
+
+**На уровне слайда:**
+
+- `layout_type` — тип макета размещения изображений (`single_wide`, `single_tall`, `two_stack`, `two_tall_row`, `three_stack`)
+- `title` — заголовок слайда
+- `notes_source` — заметки из MD файла или inline
 
 ### Опциональные поля
 
+**На уровне презентации:**
+
 - `output_path` — если не указан, будет `output.pptx`
-- `title` — заголовок слайда (по умолчанию пусто)
-- `slide_number` — номер слайда (по умолчанию пусто)
-- `notes_source` — заметки из MD файла или inline (по умолчанию пусто)
+
+**На уровне слайда:**
+
 - `images` — массив путей к изображениям (по умолчанию пусто)
+- `layout_name` — **НОВОЕ!** Переопределение макета PowerPoint для конкретного слайда
+
+### Использование разных макетов в одной презентации
+
+**Новая возможность:** Теперь вы можете использовать разные макеты PowerPoint в одной презентации!
+
+**Пример:** Титульный слайд + контентные слайды
+
+```json
+{
+  "template_path": "template.pptx",
+  "layout_name": "ContentLayout",
+  "slides": [
+    {
+      "layout_type": "single_wide",
+      "layout_name": "TitleLayout",
+      "title": "Заголовок презентации",
+      "notes_source": "Это титульный слайд",
+      "images": ["cover.jpg"]
+    },
+    {
+      "layout_type": "single_wide",
+      "title": "Слайд 1",
+      "notes_source": "Обычный контентный слайд",
+      "images": ["content1.jpg"]
+    },
+    {
+      "layout_type": "two_stack",
+      "title": "Слайд 2",
+      "notes_source": "Еще один контентный слайд",
+      "images": ["img1.jpg", "img2.jpg"]
+    }
+  ]
+}
+```
+
+**Как это работает:**
+
+1. **Глобальный `layout_name`** (`ContentLayout`) используется для всех слайдов по умолчанию
+2. **Первый слайд** переопределяет макет через `"layout_name": "TitleLayout"`
+3. **Остальные слайды** используют глобальный `ContentLayout`
+
+**Типичные сценарии:**
+
+- Титульный слайд + контент
+- Разделители разделов + контент
+- Слайды с разным расположением элементов
 
 ### Примеры
 

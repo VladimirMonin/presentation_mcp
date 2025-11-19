@@ -152,4 +152,4 @@ Presentation Builder **автоматически конвертирует WebP 
 
 ### Дополнительная документация
 
-Подробное руководство по созданию MCP инструментов: [`doc/mcp-tools-guide.md`](doc/mcp-tools-guide.md)
+Подробное руководство по созданию MCP инструментов: [`mcp-tools-guide.md`](mcp-tools-guide.md)
