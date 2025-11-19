@@ -146,6 +146,7 @@ generate_presentation("C:/projects/my_slides.json")
   "output_path": "<путь к выходному файлу>",
   "slides": [
     {
+      "slide_type": "<тип слайда: content (default) или title_youtube>",
       "layout_type": "<тип макета: single_wide, two_stack и т.д.>",
       "title": "<заголовок слайда>",
       "notes_source": "<путь к MD файлу или inline текст>",
@@ -166,7 +167,7 @@ generate_presentation("C:/projects/my_slides.json")
 
 **На уровне слайда:**
 
-- `layout_type` — тип макета размещения изображений (`single_wide`, `single_tall`, `two_stack`, `two_tall_row`, `three_stack`)
+- `layout_type` — тип макета размещения изображений (`single_wide`, `single_tall`, `two_stack`, `two_tall_row`, `three_stack`, `title_youtube`)
 - `title` — заголовок слайда
 - `notes_source` — заметки из MD файла или inline
 
@@ -178,8 +179,14 @@ generate_presentation("C:/projects/my_slides.json")
 
 **На уровне слайда:**
 
+- `slide_type` — тип слайда: `content` (по умолчанию) или `title_youtube`
 - `images` — массив путей к изображениям (по умолчанию пусто)
 - `layout_name` — **НОВОЕ!** Переопределение макета PowerPoint для конкретного слайда
+
+**Дополнительные поля для `slide_type: "title_youtube"`:**
+
+- `subtitle` — подзаголовок/описание серии (обязательное)
+- `series_number` — номер части серии (опционально)
 
 ### Использование разных макетов в одной презентации
 
@@ -226,6 +233,41 @@ generate_presentation("C:/projects/my_slides.json")
 - Титульный слайд + контент
 - Разделители разделов + контент
 - Слайды с разным расположением элементов
+
+### Пример: YouTube презентация с титульным слайдом
+
+```json
+{
+  "template_path": "templates/youtube_title.pptx",
+  "layout_name": "VideoLayout",
+  "output_path": "youtube_presentation.pptx",
+  "slides": [
+    {
+      "slide_type": "title_youtube",
+      "layout_type": "title_youtube",
+      "title": "Название канала",
+      "subtitle": "Python для начинающих",
+      "series_number": "Часть 1",
+      "notes_source": "Вводный урок по Python",
+      "images": ["channel_logo.png"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_wide",
+      "title": "Основы синтаксиса",
+      "notes_source": "notes/lesson1.md",
+      "images": ["syntax_example.png"]
+    }
+  ]
+}
+```
+
+**Особенности `slide_type: "title_youtube"`:**
+
+- Использует шаблон `youtube_title.pptx` с макетом `VideoLayout`
+- Поле `subtitle` заполняет placeholder idx=12
+- Поле `series_number` выводится в консоль (нет placeholder в шаблоне)
+- Изображение позиционируется в правый квадрат (координаты в `config/settings.py`)
 
 ### Примеры
 

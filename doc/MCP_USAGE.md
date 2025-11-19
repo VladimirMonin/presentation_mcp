@@ -131,7 +131,31 @@ MCP сервер ищет шаблоны в **своей директории**,
 {
   "template_path": "template.pptx",  // → C:/PY/presentation_mcp/template.pptx
   "output_path": "output.pptx",      // → C:/PY/presentation_mcp/output.pptx
-  "slides": [...]
+  "slides": [
+    {
+      "slide_type": "content",
+      "layout_type": "single_wide",
+      "title": "Контентный слайд",
+      "images": ["image.png"]
+    }
+  ]
+}
+
+// Для титульных слайдов YouTube:
+{
+  "template_path": "templates/youtube_title.pptx",
+  "output_path": "youtube_presentation.pptx",
+  "layout_name": "VideoLayout",
+  "slides": [
+    {
+      "slide_type": "title_youtube",
+      "layout_type": "title_youtube",
+      "title": "Название канала",
+      "subtitle": "Описание серии",
+      "series_number": "Часть 1",
+      "images": ["logo.png"]
+    }
+  ]
 }
 ```
 
