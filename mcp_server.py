@@ -75,6 +75,11 @@ def generate_presentation(config_path: str) -> str:
         - Section dividers + content
         - Different slide styles in one deck
 
+        ⚠️ IMPORTANT: Use ONE template file with MULTIPLE layouts inside!
+        The system does NOT support multiple .pptx files due to python-pptx limitations.
+        Create TitleLayout, VideoLayout, etc. in the same template file using
+        PowerPoint's Slide Master view.
+
     Returns:
         Сообщение о результате создания презентации с путём к файлу
 

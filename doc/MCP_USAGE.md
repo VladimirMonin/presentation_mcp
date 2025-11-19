@@ -143,13 +143,14 @@ MCP сервер ищет шаблоны в **своей директории**,
 
 // Для титульных слайдов YouTube:
 {
-  "template_path": "templates/youtube_title.pptx",
+  "template_path": "templates/youtube_base.pptx",
   "output_path": "youtube_presentation.pptx",
   "layout_name": "VideoLayout",
   "slides": [
     {
       "slide_type": "title_youtube",
       "layout_type": "title_youtube",
+      "layout_name": "TitleLayout",
       "title": "Название канала",
       "subtitle": "Описание серии",
       "series_number": "Часть 1",

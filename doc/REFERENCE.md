@@ -238,13 +238,14 @@ generate_presentation("C:/projects/my_slides.json")
 
 ```json
 {
-  "template_path": "templates/youtube_title.pptx",
+  "template_path": "templates/youtube_base.pptx",
   "layout_name": "VideoLayout",
   "output_path": "youtube_presentation.pptx",
   "slides": [
     {
       "slide_type": "title_youtube",
       "layout_type": "title_youtube",
+      "layout_name": "TitleLayout",
       "title": "Название канала",
       "subtitle": "Python для начинающих",
       "series_number": "Часть 1",
@@ -264,10 +265,14 @@ generate_presentation("C:/projects/my_slides.json")
 
 **Особенности `slide_type: "title_youtube"`:**
 
-- Использует шаблон `youtube_title.pptx` с макетом `VideoLayout`
-- Поле `subtitle` заполняет placeholder idx=12
+- Использует **один шаблон** `youtube_base.pptx` для всех слайдов
+- Титульный слайд использует макет `TitleLayout` (переопределяет глобальный)
+- Контентные слайды используют макет `VideoLayout` (глобальный по умолчанию)
+- Поле `subtitle` заполняет placeholder idx=13 в TitleLayout
 - Поле `series_number` выводится в консоль (нет placeholder в шаблоне)
-- Изображение позиционируется в правый квадрат (координаты в `config/settings.py`)
+- Изображение на титульном позиционируется в правый квадрат (координаты в `config/settings.py`)
+
+**⚠️ ВАЖНО:** Нельзя использовать несколько файлов шаблонов! Только один файл с несколькими макетами внутри.
 
 ### Примеры
 
