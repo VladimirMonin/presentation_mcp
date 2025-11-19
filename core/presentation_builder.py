@@ -234,23 +234,30 @@ class PresentationBuilder:
         Args:
             slide: Объект слайда.
             cfg: Конфигурация титульного слайда YouTube.
-        """
-        # Subtitle (placeholder idx=2)
-        try:
-            subtitle_ph = slide.shapes.placeholders[2]
-            subtitle_ph.text_frame.text = cfg.subtitle
-        except KeyError:
-            if self.verbose:
-                print("    ⚠ Заполнитель subtitle (idx=2) не найден")
 
-        # Series number (placeholder idx=3, опционально)
-        if cfg.series_number:
-            try:
-                series_ph = slide.shapes.placeholders[3]
-                series_ph.text_frame.text = cfg.series_number
-            except KeyError:
-                if self.verbose:
-                    print("    ⚠ Заполнитель series_number (idx=3) не найден")
+        Note:
+            Индексы заполнителей для youtube_title.pptx:
+            - idx=10: title (основной заголовок)
+            - idx=11: slide_number (номер слайда)
+            - idx=12: subtitle (подзаголовок/описание серии)
+            - series_number пока не используется (нет заполнителя)
+        """
+        # Subtitle (placeholder idx=12 в youtube_title.pptx)
+        try:
+            subtitle_ph = slide.shapes.placeholders[12]
+            subtitle_ph.text_frame.text = cfg.subtitle
+        except KeyError as e:
+            if self.verbose:
+                print(f"    ❌ Заполнитель subtitle (idx=12) не найден: {e}")
+        except Exception as e:
+            if self.verbose:
+                print(f"    ❌ Ошибка при заполнении subtitle: {e}")
+
+        # Series number - пока нет заполнителя в шаблоне
+        if cfg.series_number and self.verbose:
+            print(
+                f"    ℹ Series number '{cfg.series_number}' не добавлен (нет заполнителя)"
+            )
 
     def _place_images(self, slide, cfg: BaseSlideConfig) -> None:
         """

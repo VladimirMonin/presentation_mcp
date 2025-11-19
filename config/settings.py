@@ -99,11 +99,13 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
     # Используется для заглавного слайда видео с логотипом канала
     title_youtube = LayoutBlueprint(
         name="title_youtube",
-        description="Титульный слайд YouTube (логотип по центру)",
+        description="Титульный слайд YouTube (логотип в желтом квадрате справа)",
         required_images=1,
         placements=[
-            # Логотип канала (центрированный квадрат)
-            ImagePlacement(left=13.0, top=7.0, max_width=8.0, max_height=8.0)
+            # Логотип канала - точные координаты из PowerPoint
+            # Позиция: 14.41 см от левого края, 0 см от верха
+            # Размер: 19.46 x 19.05 см (с сохранением пропорций)
+            ImagePlacement(left=14.41, top=0.0, max_width=19.46, max_height=19.05)
         ],
     )
     registry.register(title_youtube)
