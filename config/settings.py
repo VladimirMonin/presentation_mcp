@@ -95,6 +95,19 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
     )
     registry.register(three_stack)
 
+    # Макет 6: Титульный слайд YouTube
+    # Используется для заглавного слайда видео с логотипом канала
+    title_youtube = LayoutBlueprint(
+        name="title_youtube",
+        description="Титульный слайд YouTube (логотип по центру)",
+        required_images=1,
+        placements=[
+            # Логотип канала (центрированный квадрат)
+            ImagePlacement(left=13.0, top=7.0, max_width=8.0, max_height=8.0)
+        ],
+    )
+    registry.register(title_youtube)
+
 
 # Константы для работы с шаблоном
 DEFAULT_TEMPLATE_PATH = "template.pptx"

@@ -145,19 +145,12 @@ class ConfigLoader:
         """
         json_path = Path(json_path)
 
+        # Используем to_dict() из BaseSlideConfig для сериализации
         data = {
             "template_path": config.template_path,
             "output_path": config.output_path,
             "layout_name": config.layout_name,
-            "slides": [
-                {
-                    "layout_type": slide.layout_type,
-                    "title": slide.title,
-                    "notes_source": slide.notes_source,
-                    "images": slide.images,
-                }
-                for slide in config.slides
-            ],
+            "slides": [slide.to_dict() for slide in config.slides],
         }
 
         with open(json_path, "w", encoding="utf-8") as f:
