@@ -6,7 +6,7 @@
 """
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -25,13 +25,18 @@ class SlideConfig:
         images: Список путей к изображениям для размещения на слайде.
                 Пути могут быть относительными (относительно JSON) или абсолютными.
                 Количество изображений должно соответствовать требованиям макета.
+        layout_name: Опциональное имя макета в PPTX шаблоне для этого конкретного слайда.
+                     Если указано, переопределяет глобальное значение layout_name из PresentationConfig.
+                     Это позволяет использовать разные макеты PowerPoint в одной презентации
+                     (например, титульный слайд + контентные слайды).
 
     Example:
         >>> slide = SlideConfig(
         ...     layout_type="single_wide",
         ...     title="Введение",
         ...     notes_source="notes/intro.md",
-        ...     images=["images/diagram.png"]
+        ...     images=["images/diagram.png"],
+        ...     layout_name="ContentLayout"  # Переопределить для этого слайда
         ... )
     """
 
@@ -39,6 +44,7 @@ class SlideConfig:
     title: str
     notes_source: str
     images: List[str] = field(default_factory=list)
+    layout_name: Optional[str] = None
 
     def __post_init__(self):
         """Валидация после инициализации."""

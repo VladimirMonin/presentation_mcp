@@ -107,36 +107,41 @@ class PresentationBuilder:
         except Exception as e:
             raise ValueError(f"Ошибка загрузки шаблона: {e}")
 
-        # Шаг 2: Поиск макета в шаблоне
-        slide_layout = self._find_layout(prs, config.layout_name)
-
-        if not slide_layout:
-            raise ValueError(
-                f"Макет '{config.layout_name}' не найден в шаблоне. "
-                f"Доступные макеты: {[layout.name for layout in prs.slide_layouts]}"
-            )
-
-        # Шаг 3: Применение workaround для PowerPoint 2013
+        # Шаг 2: Применение workaround для PowerPoint 2013
         # (Инициализация notes_slide для всех существующих слайдов)
         for slide in prs.slides:
             _ = slide.notes_slide
 
-        # Шаг 4: Создание слайдов
+        # Шаг 3: Создание слайдов
         if self.verbose:
             print(f"\n🔨 Создание {len(config.slides)} слайдов...")
 
         for i, slide_cfg in enumerate(config.slides, 1):
             try:
+                # Определяем макет для этого слайда
+                # Если в слайде указан layout_name - используем его, иначе глобальный
+                current_layout_name = slide_cfg.layout_name or config.layout_name
+                slide_layout = self._find_layout(prs, current_layout_name)
+
+                if not slide_layout:
+                    raise ValueError(
+                        f"Макет '{current_layout_name}' не найден в шаблоне. "
+                        f"Доступные макеты: {[layout.name for layout in prs.slide_layouts]}"
+                    )
+
                 self._add_slide(prs, slide_layout, slide_cfg, i)
                 if self.verbose:
-                    print(f"  ✓ Слайд {i}: '{slide_cfg.title}'")
+                    layout_info = (
+                        f" [{current_layout_name}]" if slide_cfg.layout_name else ""
+                    )
+                    print(f"  ✓ Слайд {i}: '{slide_cfg.title}'{layout_info}")
             except Exception as e:
                 error_msg = f"Ошибка при создании слайда {i} ('{slide_cfg.title}'): {e}"
                 self._errors.append(error_msg)
                 if self.verbose:
                     print(f"  ✗ {error_msg}")
 
-        # Шаг 5: Вывод итогов
+        # Шаг 4: Вывод итогов
         if self._errors:
             print(f"\n⚠ Завершено с {len(self._errors)} ошибками:")
             for err in self._errors:

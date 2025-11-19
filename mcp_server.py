@@ -46,17 +46,34 @@ def generate_presentation(config_path: str) -> str:
     JSON Structure Example:
         {
             "template_path": "template.pptx",
-            "layout_name": "VideoLayout",
+            "layout_name": "ContentLayout",
             "output_path": "output.pptx",
             "slides": [
                 {
                     "layout_type": "single_wide",
-                    "title": "Slide Title",
-                    "notes_source": "Notes text or path to .md",
-                    "images": ["C:/abs/path/image.png"]
+                    "layout_name": "TitleLayout",
+                    "title": "Title Slide",
+                    "notes_source": "Cover slide notes",
+                    "images": ["cover.jpg"]
+                },
+                {
+                    "layout_type": "single_wide",
+                    "title": "Content Slide",
+                    "notes_source": "Regular slide notes",
+                    "images": ["content.png"]
                 }
             ]
         }
+
+    NEW: Per-Slide Layout Override
+        You can now use different PowerPoint layouts in one presentation!
+        - Global layout_name: used by default for all slides
+        - Per-slide layout_name: overrides global for specific slides
+
+        Example use cases:
+        - Title slide + content slides
+        - Section dividers + content
+        - Different slide styles in one deck
 
     Returns:
         Сообщение о результате создания презентации с путём к файлу

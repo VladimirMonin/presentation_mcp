@@ -1,0 +1,52 @@
+{
+  "template_path": "template.pptx",
+  "layout_name": "ContentLayout",
+  "output_path": "mixed_layouts_presentation.pptx",
+  "slides": [
+    {
+      "layout_type": "single_wide",
+      "layout_name": "TitleLayout",
+      "title": "Заголовок презентации",
+      "notes_source": "Это титульный слайд презентации. Использует специальный макет TitleLayout с крупным заголовком и обложкой на весь слайд.",
+      "images": ["cover.jpg"]
+    },
+    {
+      "layout_type": "single_wide",
+      "title": "Введение",
+      "notes_source": "Первый контентный слайд. Использует глобальный макет ContentLayout (layout_name не указан).",
+      "images": ["intro.jpg"]
+    },
+    {
+      "layout_type": "two_stack",
+      "title": "Сравнение",
+      "notes_source": "Слайд с двумя изображениями вертикально. Также использует ContentLayout.",
+      "images": ["before.jpg", "after.jpg"]
+    },
+    {
+      "layout_type": "single_wide",
+      "layout_name": "SectionLayout",
+      "title": "Раздел 2: Практика",
+      "notes_source": "Разделитель раздела. Использует специальный макет SectionLayout с ярким фоном.",
+      "images": ["section2_divider.jpg"]
+    },
+    {
+      "layout_type": "single_tall",
+      "title": "Мобильный интерфейс",
+      "notes_source": "Демонстрация вертикального скриншота. ContentLayout.",
+      "images": ["mobile_screen.jpg"]
+    },
+    {
+      "layout_type": "two_tall_row",
+      "title": "Варианты дизайна",
+      "notes_source": "Сравнение двух вариантов интерфейса. ContentLayout.",
+      "images": ["variant_a.jpg", "variant_b.jpg"]
+    },
+    {
+      "layout_type": "single_wide",
+      "layout_name": "TitleLayout",
+      "title": "Заключение",
+      "notes_source": "Финальный слайд. Снова используем TitleLayout для акцента.",
+      "images": ["conclusion.jpg"]
+    }
+  ]
+}

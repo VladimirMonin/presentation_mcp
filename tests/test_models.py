@@ -31,6 +31,20 @@ class TestSlideConfig:
         assert slide.title == "Test Slide"
         assert slide.notes_source == "Test notes"
         assert len(slide.images) == 1
+        assert slide.layout_name is None  # По умолчанию None
+
+    def test_slide_with_layout_override(self):
+        """Создание слайда с переопределением макета."""
+        slide = SlideConfig(
+            layout_type="single_wide",
+            title="Title Slide",
+            notes_source="Cover notes",
+            images=["cover.jpg"],
+            layout_name="TitleLayout",
+        )
+
+        assert slide.layout_name == "TitleLayout"
+        assert slide.layout_type == "single_wide"
 
     def test_empty_title_raises_error(self):
         """Пустой заголовок должен вызывать ошибку."""
