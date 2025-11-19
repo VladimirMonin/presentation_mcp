@@ -116,6 +116,12 @@ DEFAULT_TEMPLATE_PATH = "template.pptx"
 DEFAULT_OUTPUT_PATH = "output.pptx"
 DEFAULT_LAYOUT_NAME = "VideoLayout"
 
-# ID заполнителей в шаблоне (из analyze_template.py)
+# ID заполнителей в шаблоне youtube_base.pptx
+# VideoLayout (контентные слайды):
 PLACEHOLDER_TITLE_IDX = 10
 PLACEHOLDER_SLIDE_NUM_IDX = 11
+
+# TitleLayout (титульные слайды YouTube):
+PLACEHOLDER_TITLE_LAYOUT_TITLE_IDX = 10
+PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX = 12
+PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX = 13

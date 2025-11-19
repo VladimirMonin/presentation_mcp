@@ -18,7 +18,13 @@ from core import (
     calculate_smart_dimensions,
     convert_webp_to_png,
 )
-from config import PLACEHOLDER_TITLE_IDX, PLACEHOLDER_SLIDE_NUM_IDX
+from config import (
+    PLACEHOLDER_TITLE_IDX,
+    PLACEHOLDER_SLIDE_NUM_IDX,
+    PLACEHOLDER_TITLE_LAYOUT_TITLE_IDX,
+    PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX,
+    PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX,
+)
 
 
 class PresentationBuilder:
@@ -197,27 +203,36 @@ class PresentationBuilder:
         # Workaround для PowerPoint 2013
         _ = slide.notes_slide
 
+        # Определяем, используется ли TitleLayout
+        is_title_layout = isinstance(cfg, YouTubeTitleSlideConfig)
+
+        # Выбираем правильные индексы в зависимости от типа макета
+        if is_title_layout:
+            idx_title = PLACEHOLDER_TITLE_LAYOUT_TITLE_IDX
+            idx_slide_num = PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX
+        else:
+            idx_title = self.idx_title
+            idx_slide_num = self.idx_slide_num
+
         # 1. Заголовок
         try:
-            title_ph = slide.shapes.placeholders[self.idx_title]
+            title_ph = slide.shapes.placeholders[idx_title]
             title_ph.text_frame.text = cfg.title
         except KeyError:
-            raise KeyError(
-                f"Заполнитель заголовка с индексом {self.idx_title} не найден"
-            )
+            raise KeyError(f"Заполнитель заголовка с индексом {idx_title} не найден")
 
         # 2. Дополнительные поля для YouTubeTitleSlideConfig
-        if isinstance(cfg, YouTubeTitleSlideConfig):
+        if is_title_layout:
             self._set_youtube_title_fields(slide, cfg)
 
         # 3. Номер слайда
         try:
-            num_ph = slide.shapes.placeholders[self.idx_slide_num]
+            num_ph = slide.shapes.placeholders[idx_slide_num]
             num_ph.text_frame.text = str(number)
         except KeyError:
             # Номер не критичен, можно продолжить
             if self.verbose:
-                print(f"    ⚠ Заполнитель номера ({self.idx_slide_num}) не найден")
+                print(f"    ⚠ Заполнитель номера ({idx_slide_num}) не найден")
 
         # 4. Заметки докладчика
         notes_text = self.loader.load_notes(cfg.notes_source)
@@ -236,19 +251,22 @@ class PresentationBuilder:
             cfg: Конфигурация титульного слайда YouTube.
 
         Note:
-            Индексы заполнителей для youtube_title.pptx:
+            Индексы заполнителей для TitleLayout в youtube_base.pptx:
             - idx=10: title (основной заголовок)
-            - idx=11: slide_number (номер слайда)
-            - idx=12: subtitle (подзаголовок/описание серии)
-            - series_number пока не используется (нет заполнителя)
+            - idx=12: slide_number (номер слайда)
+            - idx=13: subtitle (подзаголовок/описание серии)
         """
-        # Subtitle (placeholder idx=12 в youtube_title.pptx)
+        # Subtitle (placeholder idx=13 в TitleLayout)
         try:
-            subtitle_ph = slide.shapes.placeholders[12]
+            subtitle_ph = slide.shapes.placeholders[
+                PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX
+            ]
             subtitle_ph.text_frame.text = cfg.subtitle
         except KeyError as e:
             if self.verbose:
-                print(f"    ❌ Заполнитель subtitle (idx=12) не найден: {e}")
+                print(
+                    f"    ❌ Заполнитель subtitle (idx={PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX}) не найден: {e}"
+                )
         except Exception as e:
             if self.verbose:
                 print(f"    ❌ Ошибка при заполнении subtitle: {e}")

@@ -158,7 +158,7 @@ class YouTubeTitleSlideConfig(BaseSlideConfig):
 
     SLIDE_TYPE: ClassVar[str] = "title_youtube"
     REQUIRED_LAYOUT_NAME: ClassVar[str] = (
-        "VideoLayout"  # Используем тот же макет, что в youtube_title.pptx
+        "TitleLayout"  # Титульный макет для YouTube слайдов
     )
 
     # Специфичные поля для титульного слайда
