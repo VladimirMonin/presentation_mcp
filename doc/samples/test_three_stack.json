@@ -1,0 +1,17 @@
+{
+  "template_path": "c:\\PY\\presentation_mcp\\template.pptx",
+  "layout_name": "VideoLayout",
+  "output_path": "c:\\PY\\presentation_mcp\\output_three_stack.pptx",
+  "slides": [
+    {
+      "layout_type": "three_stack",
+      "title": "Три шага установки",
+      "notes_source": "На этом слайде показаны три последовательных шага установки VS Code:\n- Шаг 1: Скачивание\n- Шаг 2: Установка расширений\n- Шаг 3: Настройка",
+      "images": [
+        "c:\\PY\\presentation_mcp\\images\\Страница_загрузки_Visual_Studio_Code_с_вариантами_для_Windows_Linux_и_Mac.png",
+        "c:\\PY\\presentation_mcp\\images\\Карточка_расширения_Cline_в_VS_Code.png",
+        "c:\\PY\\presentation_mcp\\images\\Карточка_расширения_Excalidraw_в_VS_Code.png"
+      ]
+    }
+  ]
+}
