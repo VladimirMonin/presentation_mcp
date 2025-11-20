@@ -6,8 +6,8 @@
 """
 
 from pathlib import Path
-from typing import Tuple, Optional
-import tempfile
+from typing import Tuple, Optional, BinaryIO
+import io
 
 try:
     from PIL import Image
@@ -15,7 +15,7 @@ except ImportError:
     Image = None  # Graceful degradation
 
 
-def convert_webp_to_png(image_path: Path) -> Path:
+def convert_webp_to_png(image_path: Path) -> BinaryIO:
     """
     Конвертирует WebP изображение в PNG для совместимости с python-pptx.
     
@@ -26,7 +26,7 @@ def convert_webp_to_png(image_path: Path) -> Path:
         image_path: Путь к WebP изображению.
         
     Returns:
-        Путь к временному PNG файлу.
+        Поток байтов (BytesIO) с PNG данными.
         
     Raises:
         ImportError: Если Pillow не установлен.
@@ -51,22 +51,16 @@ def convert_webp_to_png(image_path: Path) -> Path:
         elif img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Создаём временный PNG файл
-        # Используем ту же директорию что и исходный файл для доступности
-        temp_dir = image_path.parent
-        temp_file = tempfile.NamedTemporaryFile(
-            suffix='.png',
-            prefix=f'{image_path.stem}_',
-            dir=temp_dir,
-            delete=False
-        )
-        temp_path = Path(temp_file.name)
-        temp_file.close()
+        # Создаём буфер в памяти вместо временного файла
+        png_buffer = io.BytesIO()
         
-        # Сохраняем как PNG
-        img.save(temp_path, 'PNG', optimize=True)
+        # Сохраняем PNG в буфер
+        img.save(png_buffer, 'PNG', optimize=True)
         
-    return temp_path
+        # Возвращаем указатель чтения в начало потока
+        png_buffer.seek(0)
+        
+    return png_buffer
 
 
 def calculate_smart_dimensions(
