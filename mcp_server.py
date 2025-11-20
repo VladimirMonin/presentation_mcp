@@ -31,20 +31,34 @@ def generate_presentation(config_path: str) -> str:
         config_path: Абсолютный путь к JSON файлу.
 
     Supported Layout Types (layout_type):
-        - single_wide (1 img, 16:9)
-        - single_tall (1 img, 9:16)
-        - two_stack (2 imgs, vertical)
-        - two_tall_row (2 imgs, horizontal)
-        - three_stack (3 imgs, vertical)
+        - single_wide (1 img, 16:9 horizontal)
+        - single_tall (1 img, 9:16 vertical)
+        - two_stack (2 imgs, vertical stack)
+        - two_tall_row (2 imgs, horizontal row)
+        - three_stack (3 imgs, vertical stack)
 
     Supported Image Formats:
         - BMP, GIF, JPEG, PNG, TIFF, WMF (native)
         - WebP (auto-converted to PNG)
+        - GIF: animations are preserved! ✨
 
     Supported Audio Formats:
         - MP3, WAV, M4A and other audio formats
         - Audio is automatically hidden off-slide (not visible)
         - Optional per-slide basis
+
+    ⚠️ IMPORTANT: Multiple Layouts in ONE Template File
+        You can use DIFFERENT PowerPoint slide layouts in one presentation,
+        but they must ALL be in the SAME .pptx template file!
+        
+        Example: Create TitleLayout, VideoLayout, SectionLayout in ONE template
+        using PowerPoint's Slide Master view. Then override per slide:
+        
+        - Global layout_name: "VideoLayout" (default for all slides)
+        - Per-slide layout_name: "TitleLayout" (override for specific slide)
+        
+        ❌ NOT SUPPORTED: Multiple template files (python-pptx limitation)
+        ✅ SUPPORTED: Multiple layouts in one template file
 
     Path Resolution:
         - template_path: relative → server dir, absolute → as is
@@ -78,24 +92,15 @@ def generate_presentation(config_path: str) -> str:
                     "notes_source": "Slide with voiceover",
                     "images": ["img1.png", "img2.png"],
                     "audio": "audio/voiceover.wav"
+                },
+                {
+                    "layout_type": "single_wide",
+                    "title": "Animated GIF Slide",
+                    "notes_source": "GIF animation preserved",
+                    "images": ["animation.gif"]
                 }
             ]
         }
-
-    NEW: Per-Slide Layout Override
-        You can now use different PowerPoint layouts in one presentation!
-        - Global layout_name: used by default for all slides
-        - Per-slide layout_name: overrides global for specific slides
-
-        Example use cases:
-        - Title slide + content slides
-        - Section dividers + content
-        - Different slide styles in one deck
-
-        ⚠️ IMPORTANT: Use ONE template file with MULTIPLE layouts inside!
-        The system does NOT support multiple .pptx files due to python-pptx limitations.
-        Create TitleLayout, VideoLayout, etc. in the same template file using
-        PowerPoint's Slide Master view.
 
     Returns:
         Сообщение о результате создания презентации с путём к файлу
@@ -242,8 +247,8 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
 
     Args:
         layout_name: Имя конкретного макета (single_wide, single_tall, two_stack,
-                    two_tall_row, three_stack) или None для получения всей документации.
-                    Также можно указать "all" для полной документации.
+                    two_tall_row, three_stack, title_youtube) или None для получения
+                    всей документации. Также можно указать "all" для полной документации.
 
     Returns:
         Markdown-форматированная документация.
@@ -254,9 +259,11 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
         - two_stack: два изображения вертикально
         - two_tall_row: два высоких изображения горизонтально
         - three_stack: три изображения вертикально
+        - title_youtube: титульный слайд YouTube (квадратный логотип + title/subtitle/series_number)
 
     Examples:
         get_layout_documentation("single_wide")  # документация по single_wide
+        get_layout_documentation("title_youtube")  # документация по YouTube титру
         get_layout_documentation("all")          # вся документация
         get_layout_documentation()               # вся документация (default)
     """
@@ -277,6 +284,7 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
             "two_stack",
             "two_tall_row",
             "three_stack",
+            "title_youtube",
         ]
 
         # Если запрашивается вся документация или layout_name не указан
