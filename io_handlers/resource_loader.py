@@ -98,6 +98,26 @@ class ResourceLoader:
         """
         return self.resolver.resolve_and_check(image_path)
 
+    def resolve_audio(self, audio_path: str) -> Path:
+        """
+        Разрешает путь к аудиофайлу и проверяет его существование.
+
+        Args:
+            audio_path: Путь к аудиофайлу (относительный или абсолютный).
+
+        Returns:
+            Абсолютный путь к аудиофайлу.
+
+        Raises:
+            FileNotFoundError: Если аудиофайл не найден.
+
+        Example:
+            >>> audio = loader.resolve_audio("audio/voiceover.mp3")
+            >>> print(audio)
+            /home/user/project/audio/voiceover.mp3
+        """
+        return self.resolver.resolve_and_check(audio_path)
+
     def check_resource_existence(
         self, path: str, resource_type: str = "ресурс"
     ) -> bool:
