@@ -18,48 +18,50 @@ except ImportError:
 def convert_webp_to_png(image_path: Path) -> BinaryIO:
     """
     Конвертирует WebP изображение в PNG для совместимости с python-pptx.
-    
+
     python-pptx поддерживает только: BMP, GIF, JPEG, PNG, TIFF, WMF.
     WebP не поддерживается, поэтому конвертируем его в PNG.
-    
+
     Args:
         image_path: Путь к WebP изображению.
-        
+
     Returns:
         Поток байтов (BytesIO) с PNG данными.
-        
+
     Raises:
         ImportError: Если Pillow не установлен.
         ValueError: Если файл не является WebP.
     """
     if Image is None:
         raise ImportError("Pillow требуется для конвертации WebP изображений")
-    
-    if image_path.suffix.lower() != '.webp':
+
+    if image_path.suffix.lower() != ".webp":
         raise ValueError(f"Файл не является WebP: {image_path}")
-    
+
     # Открываем WebP
     with Image.open(image_path) as img:
         # Конвертируем в RGB если нужно (для прозрачности)
-        if img.mode in ('RGBA', 'LA', 'P'):
+        if img.mode in ("RGBA", "LA", "P"):
             # Создаём белый фон для прозрачных изображений
-            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-            if img.mode == 'P':
-                img = img.convert('RGBA')
-            rgb_img.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+            rgb_img = Image.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            rgb_img.paste(
+                img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None
+            )
             img = rgb_img
-        elif img.mode != 'RGB':
-            img = img.convert('RGB')
-        
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
         # Создаём буфер в памяти вместо временного файла
         png_buffer = io.BytesIO()
-        
+
         # Сохраняем PNG в буфер
-        img.save(png_buffer, 'PNG', optimize=True)
-        
+        img.save(png_buffer, "PNG", optimize=True)
+
         # Возвращаем указатель чтения в начало потока
         png_buffer.seek(0)
-        
+
     return png_buffer
 
 

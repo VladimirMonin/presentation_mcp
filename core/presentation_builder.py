@@ -326,7 +326,7 @@ class PresentationBuilder:
                 # Автоматическая конвертация WebP → PNG (in-memory)
                 original_path = img_path
                 image_source = img_path  # По умолчанию используем путь к файлу
-                
+
                 if img_path.suffix.lower() == ".webp":
                     try:
                         # convert_webp_to_png теперь возвращает BytesIO
@@ -347,9 +347,13 @@ class PresentationBuilder:
                 placement_dict = placement.to_dict()
 
                 # Умное масштабирование (для BytesIO используем исходный путь)
-                dimensions_source = original_path if img_path.suffix.lower() == ".webp" else img_path
+                dimensions_source = (
+                    original_path if img_path.suffix.lower() == ".webp" else img_path
+                )
                 width, height = calculate_smart_dimensions(
-                    dimensions_source, placement_dict["max_width"], placement_dict["max_height"]
+                    dimensions_source,
+                    placement_dict["max_width"],
+                    placement_dict["max_height"],
                 )
 
                 # Конвертация в единицы python-pptx
@@ -362,7 +366,11 @@ class PresentationBuilder:
                 # python-pptx поддерживает как пути (str/Path), так и потоки (BytesIO)
                 if isinstance(image_source, Path):
                     slide.shapes.add_picture(
-                        str(image_source), left_cm, top_cm, width=width_cm, height=height_cm
+                        str(image_source),
+                        left_cm,
+                        top_cm,
+                        width=width_cm,
+                        height=height_cm,
                     )
                 else:
                     # BytesIO передаём напрямую
