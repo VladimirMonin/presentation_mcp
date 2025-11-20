@@ -319,22 +319,21 @@ class PresentationBuilder:
                     print(f"    ⚠ Изображение #{i + 1} игнорируется (нет размещения)")
                 break
 
-            # Инициализация переменной для временного файла вне try-блока
-            temp_png_path = None
-
             try:
                 # Разрешение пути к изображению
                 img_path = self.loader.resolve_image(img_path_str)
 
-                # Автоматическая конвертация WebP → PNG
+                # Автоматическая конвертация WebP → PNG (in-memory)
                 original_path = img_path
+                image_source = img_path  # По умолчанию используем путь к файлу
+
                 if img_path.suffix.lower() == ".webp":
                     try:
-                        temp_png_path = convert_webp_to_png(img_path)
-                        img_path = temp_png_path
+                        # convert_webp_to_png теперь возвращает BytesIO
+                        image_source = convert_webp_to_png(img_path)
                         if self.verbose:
                             print(
-                                f"    🔄 WebP сконвертирован в PNG: {original_path.name}"
+                                f"    🔄 WebP сконвертирован в памяти: {original_path.name}"
                             )
                     except Exception as e:
                         error_msg = f"Ошибка конвертации WebP {img_path_str}: {e}"
@@ -347,9 +346,14 @@ class PresentationBuilder:
                 placement = blueprint.placements[i]
                 placement_dict = placement.to_dict()
 
-                # Умное масштабирование
+                # Умное масштабирование (для BytesIO используем исходный путь)
+                dimensions_source = (
+                    original_path if img_path.suffix.lower() == ".webp" else img_path
+                )
                 width, height = calculate_smart_dimensions(
-                    img_path, placement_dict["max_width"], placement_dict["max_height"]
+                    dimensions_source,
+                    placement_dict["max_width"],
+                    placement_dict["max_height"],
                 )
 
                 # Конвертация в единицы python-pptx
@@ -359,21 +363,20 @@ class PresentationBuilder:
                 height_cm = Cm(height) if height is not None else None
 
                 # Добавление изображения на слайд
-                slide.shapes.add_picture(
-                    str(img_path), left_cm, top_cm, width=width_cm, height=height_cm
-                )
-
-                # Удаление временного PNG файла после вставки
-                if temp_png_path and temp_png_path.exists():
-                    try:
-                        temp_png_path.unlink()
-                        if self.verbose:
-                            print(f"    🗑 Временный файл удалён: {temp_png_path.name}")
-                    except Exception as e:
-                        if self.verbose:
-                            print(
-                                f"    ⚠ Не удалось удалить временный файл {temp_png_path.name}: {e}"
-                            )
+                # python-pptx поддерживает как пути (str/Path), так и потоки (BytesIO)
+                if isinstance(image_source, Path):
+                    slide.shapes.add_picture(
+                        str(image_source),
+                        left_cm,
+                        top_cm,
+                        width=width_cm,
+                        height=height_cm,
+                    )
+                else:
+                    # BytesIO передаём напрямую
+                    slide.shapes.add_picture(
+                        image_source, left_cm, top_cm, width=width_cm, height=height_cm
+                    )
 
             except FileNotFoundError:
                 # Изображение не найдено - добавляем в ошибки, но продолжаем
@@ -381,9 +384,6 @@ class PresentationBuilder:
                 self._errors.append(error_msg)
                 if self.verbose:
                     print(f"    ✗ {error_msg}")
-                # Удаляем временный файл, если был создан
-                if temp_png_path and temp_png_path.exists():
-                    temp_png_path.unlink()
 
             except Exception as e:
                 # Другая ошибка при добавлении изображения
@@ -391,9 +391,6 @@ class PresentationBuilder:
                 self._errors.append(error_msg)
                 if self.verbose:
                     print(f"    ✗ {error_msg}")
-                # Удаляем временный файл, если был создан
-                if temp_png_path and temp_png_path.exists():
-                    temp_png_path.unlink()
 
     @staticmethod
     def _find_layout(prs: Presentation, layout_name: str):
