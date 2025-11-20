@@ -5,9 +5,12 @@
 необходимых для генерации презентации.
 """
 
+import logging
 from pathlib import Path
 
 from .path_resolver import PathResolver
+
+logger = logging.getLogger(__name__)
 
 
 class ResourceLoader:
@@ -66,16 +69,25 @@ class ResourceLoader:
         """
         if source.endswith(".md"):
             # Это путь к файлу
-            md_path = self.resolver.resolve_and_check(source)
+            logger.debug("🎯 Определение типа источника заметок: ФАЙЛ (.md)")
+            logger.debug(f"📝 Загрузка заметок из {source}")
+
+            try:
+                md_path = self.resolver.resolve_and_check(source)
+            except FileNotFoundError:
+                logger.warning(f"⚠️ Не найден файл заметок: {source}")
+                raise
 
             try:
                 with open(md_path, "r", encoding="utf-8") as f:
                     content = f.read()
                 return content
             except IOError as e:
+                logger.error(f"❌ Ошибка чтения файла заметок: {e}", exc_info=True)
                 raise IOError(f"Ошибка чтения Markdown файла {md_path}: {e}") from e
         else:
             # Это inline текст
+            logger.debug("🎯 Определение типа источника заметок: INLINE текст")
             return source
 
     def resolve_image(self, image_path: str) -> Path:
@@ -96,7 +108,10 @@ class ResourceLoader:
             >>> print(img)
             /home/user/project/images/diagram.png
         """
-        return self.resolver.resolve_and_check(image_path)
+        resolved_path = self.resolver.resolve_and_check(image_path)
+        file_size = resolved_path.stat().st_size
+        logger.debug(f"🔍 Файл найден: {resolved_path}, Размер: {file_size} байт")
+        return resolved_path
 
     def resolve_audio(self, audio_path: str) -> Path:
         """
@@ -116,7 +131,10 @@ class ResourceLoader:
             >>> print(audio)
             /home/user/project/audio/voiceover.mp3
         """
-        return self.resolver.resolve_and_check(audio_path)
+        resolved_path = self.resolver.resolve_and_check(audio_path)
+        file_size = resolved_path.stat().st_size
+        logger.debug(f"🔍 Файл найден: {resolved_path}, Размер: {file_size} байт")
+        return resolved_path
 
     def check_resource_existence(
         self, path: str, resource_type: str = "ресурс"
@@ -135,8 +153,11 @@ class ResourceLoader:
             >>> if not loader.check_resource_existence("optional.png", "изображение"):
             ...     print("Изображение не найдено, использую заглушку")
         """
+        logger.debug(f"🔍 Проверка существования {resource_type}: {path}")
         try:
             self.resolver.resolve_and_check(path)
+            logger.debug(f"✅ {resource_type.capitalize()} найден: {path}")
             return True
         except FileNotFoundError:
+            logger.debug(f"⚠️ {resource_type.capitalize()} не найден: {path}")
             return False

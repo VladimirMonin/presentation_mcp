@@ -6,10 +6,13 @@
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Union, Dict, Any
 
 from models import PresentationConfig, SlideConfig
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigLoader:
@@ -43,18 +46,36 @@ class ConfigLoader:
         """
         json_path = Path(json_path)
 
+        logger.info(f"📥 Загрузка конфигурации: {json_path}")
+
         if not json_path.exists():
-            raise FileNotFoundError(f"Конфигурационный файл не найден: {json_path}")
+            error_msg = f"Конфигурационный файл не найден: {json_path}"
+            logger.error(f"❌ {error_msg}")
+            raise FileNotFoundError(error_msg)
 
         try:
             with open(json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                raw_content = f.read()
+                # Логируем первые 500 символов raw JSON для отладки
+                logger.debug(
+                    f"🔍 Сырые данные JSON (первые 500 символов): {raw_content[:500]}"
+                )
+                data = json.loads(raw_content)
         except json.JSONDecodeError as e:
+            logger.error(
+                "❌ Не удалось загрузить конфигурацию: ошибка парсинга JSON",
+                exc_info=True,
+            )
             raise json.JSONDecodeError(
                 f"Ошибка парсинга JSON в {json_path}: {e.msg}", e.doc, e.pos
             )
+        except Exception as e:
+            logger.error(f"❌ Не удалось загрузить конфигурацию: {e}", exc_info=True)
+            raise
 
-        return ConfigLoader._parse_config(data, json_path)
+        config = ConfigLoader._parse_config(data, json_path)
+        logger.info("✅ Конфигурация загружена успешно")
+        return config
 
     @staticmethod
     def _parse_config(data: Dict[str, Any], source_path: Path) -> PresentationConfig:
@@ -72,17 +93,31 @@ class ConfigLoader:
             ValueError: Если структура данных невалидна.
         """
         try:
+            # Логируем применение дефолтных значений
+            template_default = data.get("template_path", "template.pptx")
+            layout_default = data.get("layout_name", "VideoLayout")
+            logger.debug(
+                f"🔧 Применение дефолтных значений: template_path={template_default}, layout_name={layout_default}"
+            )
+
             # Извлекаем слайды
             slides_data = data.get("slides", [])
             if not isinstance(slides_data, list):
-                raise ValueError("Поле 'slides' должно быть массивом")
+                error_msg = "Поле 'slides' должно быть массивом"
+                logger.error(f"⚠️ Ошибка валидации: {error_msg}")
+                raise ValueError(error_msg)
 
             # Парсим слайды - передаем словари напрямую!
             # PresentationConfig.__post_init__ сам вызовет фабрику
             slides_data_list = []
             for i, slide_data in enumerate(slides_data, 1):
                 if not isinstance(slide_data, dict):
-                    raise ValueError(f"Слайд #{i} должен быть объектом JSON")
+                    error_msg = f"Слайд #{i} должен быть объектом JSON"
+                    logger.error(f"⚠️ Ошибка валидации: {error_msg}")
+                    raise ValueError(error_msg)
+
+                # Логируем сырые данные каждого слайда
+                logger.debug(f"🔍 Сырые данные слайда #{i}: {slide_data}")
                 slides_data_list.append(slide_data)
 
             # Создаём конфигурацию
@@ -98,9 +133,9 @@ class ConfigLoader:
         except ValueError:
             raise
         except Exception as e:
-            raise ValueError(
-                f"Ошибка при парсинге конфигурации из {source_path}: {e}"
-            ) from e
+            error_msg = f"Ошибка при парсинге конфигурации из {source_path}: {e}"
+            logger.error(f"⚠️ Ошибка валидации: {error_msg}", exc_info=True)
+            raise ValueError(error_msg) from e
 
     @staticmethod
     def _parse_slide(data: Dict[str, Any]) -> SlideConfig:
@@ -144,6 +179,9 @@ class ConfigLoader:
         """
         json_path = Path(json_path)
 
+        logger.info(f"💾 Сохранение конфигурации в: {json_path}")
+        logger.debug(f"📊 Количество слайдов для сохранения: {len(config.slides)}")
+
         # Используем to_dict() из BaseSlideConfig для сериализации
         data = {
             "template_path": config.template_path,
@@ -152,5 +190,10 @@ class ConfigLoader:
             "slides": [slide.to_dict() for slide in config.slides],
         }
 
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        try:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            logger.info("✅ Конфигурация сохранена успешно")
+        except Exception as e:
+            logger.error(f"❌ Ошибка сохранения конфигурации: {e}", exc_info=True)
+            raise
