@@ -25,6 +25,7 @@ class BaseSlideConfig(ABC):
         notes_source: Источник заметок (путь к MD файлу или inline текст)
         images: Список путей к изображениям
         layout_name: Имя макета PowerPoint (может переопределять глобальное значение)
+        audio: Путь к аудиофайлу для озвучки слайда (опциональное поле)
 
         SLIDE_TYPE: Уникальный идентификатор типа слайда (определяется в подклассах)
 
@@ -43,6 +44,7 @@ class BaseSlideConfig(ABC):
     notes_source: str = ""
     images: List[str] = field(default_factory=list)
     layout_name: Optional[str] = None
+    audio: Optional[str] = None
 
     # Метаданные типа (класс-уровень, переопределяются в подклассах)
     SLIDE_TYPE: ClassVar[str]
@@ -93,6 +95,7 @@ class BaseSlideConfig(ABC):
             "notes_source": self.notes_source,
             "images": self.images,
             "layout_name": self.layout_name,
+            "audio": self.audio,
         }
 
 

@@ -151,7 +151,8 @@ generate_presentation("C:/projects/my_slides.json")
       "title": "<заголовок слайда>",
       "notes_source": "<путь к MD файлу или inline текст>",
       "images": ["<путь к изображению 1>", "<путь к изображению 2>"],
-      "layout_name": "<опционально: переопределить макет для этого слайда>"
+      "layout_name": "<опционально: переопределить макет для этого слайда>",
+      "audio": "<опционально: путь к аудиофайлу для озвучки>"
     }
   ]
 }
@@ -182,6 +183,7 @@ generate_presentation("C:/projects/my_slides.json")
 - `slide_type` — тип слайда: `content` (по умолчанию) или `title_youtube`
 - `images` — массив путей к изображениям (по умолчанию пусто)
 - `layout_name` — **НОВОЕ!** Переопределение макета PowerPoint для конкретного слайда
+- `audio` — **НОВОЕ!** Путь к аудиофайлу для озвучки слайда (опционально)
 
 **Дополнительные поля для `slide_type: "title_youtube"`:**
 
@@ -274,6 +276,54 @@ generate_presentation("C:/projects/my_slides.json")
 
 **⚠️ ВАЖНО:** Нельзя использовать несколько файлов шаблонов! Только один файл с несколькими макетами внутри.
 
+### Пример: Презентация с аудио
+
+Теперь вы можете добавлять аудиофайлы (озвучку, музыку) к слайдам:
+
+```json
+{
+  "template_path": "template.pptx",
+  "layout_name": "ContentLayout",
+  "output_path": "presentation_with_audio.pptx",
+  "slides": [
+    {
+      "layout_type": "single_wide",
+      "title": "Слайд с озвучкой",
+      "notes_source": "Этот слайд имеет аудио дорожку",
+      "images": ["slide1.jpg"],
+      "audio": "voiceovers/slide1.mp3"
+    },
+    {
+      "layout_type": "two_stack",
+      "title": "Слайд без аудио",
+      "notes_source": "Обычный слайд",
+      "images": ["img1.jpg", "img2.jpg"]
+    },
+    {
+      "layout_type": "single_wide",
+      "title": "Еще один слайд с озвучкой",
+      "notes_source": "Второй слайд с аудио",
+      "images": ["slide3.jpg"],
+      "audio": "voiceovers/slide3.wav"
+    }
+  ]
+}
+```
+
+**Как работает аудио:**
+
+- Поле `audio` опциональное — можно использовать только на некоторых слайдах
+- Поддерживаемые форматы: MP3, WAV, M4A и другие аудиоформаты
+- Аудио автоматически скрывается за пределами слайда (не видно визуально)
+- При воспроизведении презентации аудио можно запустить кликом на слайд
+- Путь к аудиофайлу разрешается относительно JSON конфигурации
+
+**Технические детали:**
+
+- Используется workaround через `add_movie` с `mime_type='video/mp4'`
+- PowerPoint корректно распознает аудио при открытии файла
+- Объект размещается как 1x1 см за верхней границей слайда (top=-10 см)
+
 ### Примеры
 
 См. файлы в `doc/samples/`:
@@ -281,6 +331,7 @@ generate_presentation("C:/projects/my_slides.json")
 - `simple_example.json` — базовый пример с одним изображением
 - `multi_image_example.json` — пример с двумя изображениями
 - `absolute_paths_example.json` — пример с абсолютными путями
+- `audio_example.json` — **НОВОЕ!** пример с аудио озвучкой
 
 ---
 
