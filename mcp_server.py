@@ -38,10 +38,16 @@ def generate_presentation(config_path: str) -> str:
         - BMP, GIF, JPEG, PNG, TIFF, WMF (native)
         - WebP (auto-converted to PNG)
 
+    Supported Audio Formats:
+        - MP3, WAV, M4A and other audio formats
+        - Audio is automatically hidden off-slide (not visible)
+        - Optional per-slide basis
+
     Path Resolution:
         - template_path: relative → server dir, absolute → as is
         - output_path: relative → server dir, absolute → as is
         - images: resolved relative to JSON file location
+        - audio: resolved relative to JSON file location
 
     JSON Structure Example:
         {
@@ -54,13 +60,21 @@ def generate_presentation(config_path: str) -> str:
                     "layout_name": "TitleLayout",
                     "title": "Title Slide",
                     "notes_source": "Cover slide notes",
-                    "images": ["cover.jpg"]
+                    "images": ["cover.jpg"],
+                    "audio": "audio/intro.mp3"
                 },
                 {
                     "layout_type": "single_wide",
                     "title": "Content Slide",
                     "notes_source": "Regular slide notes",
                     "images": ["content.png"]
+                },
+                {
+                    "layout_type": "two_stack",
+                    "title": "Slide with Audio",
+                    "notes_source": "Slide with voiceover",
+                    "images": ["img1.png", "img2.png"],
+                    "audio": "audio/voiceover.wav"
                 }
             ]
         }
