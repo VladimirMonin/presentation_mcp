@@ -5,6 +5,7 @@
 вместе для генерации итоговой презентации.
 """
 
+import logging
 from pathlib import Path
 from typing import Optional
 from pptx import Presentation
@@ -25,6 +26,8 @@ from config import (
     PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX,
     PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PresentationBuilder:
@@ -84,6 +87,10 @@ class PresentationBuilder:
 
         self._errors = []  # Список ошибок, накопленных в процессе
 
+        logger.debug(
+            f"⚙️ Инициализация PresentationBuilder: idx_title={idx_title}, idx_slide_num={idx_slide_num}"
+        )
+
     def build(
         self, config: PresentationConfig, template_path: Path
     ) -> Optional[Presentation]:
@@ -103,15 +110,20 @@ class PresentationBuilder:
         """
         self._errors = []  # Сброс ошибок
 
+        logger.info(f"🚀 Начало сборки презентации из шаблона: {template_path}")
+        logger.debug(f"📂 Полный путь к шаблону: {template_path.resolve()}")
+
         # Шаг 1: Загрузка шаблона
-        if self.verbose:
-            print(f"📄 Загрузка шаблона: {template_path}")
+        logger.debug(f"� Загрузка шаблона: {template_path}")
 
         try:
             prs = Presentation(str(template_path))
+            logger.debug(f"✅ Шаблон загружен, слайдов в мастере: {len(prs.slide_layouts)}")
         except FileNotFoundError:
+            logger.error(f"❌ Шаблон не найден: {template_path}")
             raise FileNotFoundError(f"Шаблон не найден: {template_path}")
         except Exception as e:
+            logger.error(f"❌ Ошибка загрузки шаблона: {e}", exc_info=True)
             raise ValueError(f"Ошибка загрузки шаблона: {e}")
 
         # Шаг 2: Применение workaround для PowerPoint 2013
@@ -120,42 +132,49 @@ class PresentationBuilder:
             _ = slide.notes_slide
 
         # Шаг 3: Создание слайдов
-        if self.verbose:
-            print(f"\n🔨 Создание {len(config.slides)} слайдов...")
+        logger.info(f"� Создание {len(config.slides)} слайдов...")
+        logger.debug(f"🔍 Глобальный макет: {config.layout_name}")
 
         for i, slide_cfg in enumerate(config.slides, 1):
             try:
                 # Определяем макет для этого слайда
                 # Если в слайде указан layout_name - используем его, иначе глобальный
                 current_layout_name = slide_cfg.layout_name or config.layout_name
+                
+                if slide_cfg.layout_name:
+                    logger.debug(f"🎭 Слайд #{i}: локальный макет '{current_layout_name}' (override)")
+                else:
+                    logger.debug(f"🎭 Слайд #{i}: глобальный макет '{current_layout_name}'")
+                
                 slide_layout = self._find_layout(prs, current_layout_name)
 
                 if not slide_layout:
+                    available = [layout.name for layout in prs.slide_layouts]
+                    logger.error(f"❌ Макет '{current_layout_name}' не найден. Доступные: {available}")
                     raise ValueError(
                         f"Макет '{current_layout_name}' не найден в шаблоне. "
-                        f"Доступные макеты: {[layout.name for layout in prs.slide_layouts]}"
+                        f"Доступные макеты: {available}"
                     )
 
                 self._add_slide(prs, slide_layout, slide_cfg, i)
-                if self.verbose:
-                    layout_info = (
-                        f" [{current_layout_name}]" if slide_cfg.layout_name else ""
-                    )
-                    print(f"  ✓ Слайд {i}: '{slide_cfg.title}'{layout_info}")
+                logger.debug(f"✅ Слайд {i} '{slide_cfg.title}' создан успешно")
             except Exception as e:
                 error_msg = f"Ошибка при создании слайда {i} ('{slide_cfg.title}'): {e}"
                 self._errors.append(error_msg)
-                if self.verbose:
-                    print(f"  ✗ {error_msg}")
+                logger.error(f"❌ {error_msg}", exc_info=True)
 
         # Шаг 4: Вывод итогов
+        total_slides = len(config.slides)
+        successful_slides = total_slides - len(self._errors)
+        
         if self._errors:
-            print(f"\n⚠ Завершено с {len(self._errors)} ошибками:")
+            logger.warning(f"⚠️ Завершено с {len(self._errors)} ошибками из {total_slides} слайдов")
             for err in self._errors:
-                print(f"  - {err}")
-        elif self.verbose:
-            print("\n✅ Презентация успешно собрана!")
+                logger.error(f"  - {err}")
+        else:
+            logger.info(f"✅ Презентация успешно собрана")
 
+        logger.info(f"📊 Создано слайдов: {successful_slides}/{total_slides}")
         return prs
 
     def save(self, prs: Presentation, output_path: Path) -> None:
@@ -170,10 +189,11 @@ class PresentationBuilder:
             IOError: Если не удалось сохранить файл.
         """
         try:
+            logger.debug(f"🔧 Сохранение презентации: {output_path}")
             prs.save(str(output_path))
-            if self.verbose:
-                print(f"\n💾 Сохранено: {output_path}")
+            logger.info(f"✅ Презентация сохранена: {output_path}")
         except Exception as e:
+            logger.error(f"❌ Ошибка сохранения презентации: {e}", exc_info=True)
             raise IOError(f"Ошибка сохранения презентации: {e}")
 
     def get_errors(self) -> list:
@@ -197,8 +217,12 @@ class PresentationBuilder:
             cfg: Конфигурация слайда (BaseSlideConfig или его подклассы).
             number: Номер слайда (для отображения).
         """
+        logger.info(f"📄 Обработка слайда #{number}: '{cfg.title}' (Layout: {layout.name})")
+        logger.debug(f"🔍 Тип конфига: {type(cfg).__name__}, изображений: {len(cfg.images) if cfg.images else 0}, аудио: {bool(cfg.audio)}")
+        
         # Создание слайда
         slide = prs.slides.add_slide(layout)
+        logger.debug(f"🔧 Слайд создан, ID: {slide.slide_id}")
 
         # Workaround для PowerPoint 2013
         _ = slide.notes_slide
@@ -218,32 +242,38 @@ class PresentationBuilder:
         try:
             title_ph = slide.shapes.placeholders[idx_title]
             title_ph.text_frame.text = cfg.title
+            logger.debug(f"🔧 Title установлен в placeholder idx={idx_title}")
         except KeyError:
+            logger.error(f"❌ Заполнитель заголовка idx={idx_title} не найден")
             raise KeyError(f"Заполнитель заголовка с индексом {idx_title} не найден")
 
         # 2. Дополнительные поля для YouTubeTitleSlideConfig
         if is_title_layout:
+            logger.debug("🔧 Обработка YouTube-титульника")
             self._set_youtube_title_fields(slide, cfg)
 
         # 3. Номер слайда
         try:
             num_ph = slide.shapes.placeholders[idx_slide_num]
             num_ph.text_frame.text = str(number)
+            logger.debug(f"🔧 Номер слайда {number} установлен в placeholder idx={idx_slide_num}")
         except KeyError:
-            # Номер не критичен, можно продолжить
-            if self.verbose:
-                print(f"    ⚠ Заполнитель номера ({idx_slide_num}) не найден")
+            logger.debug(f"🔍 Заполнитель номера idx={idx_slide_num} не найден (не критично)")
 
         # 4. Заметки докладчика
+        logger.debug(f"📝 Загрузка заметок: {cfg.notes_source}")
         notes_text = self.loader.load_notes(cfg.notes_source)
         clean_notes = clean_markdown_for_notes(notes_text)
         slide.notes_slide.notes_text_frame.text = clean_notes
+        logger.debug(f"🔧 Заметки добавлены: {len(clean_notes)} символов")
 
         # 5. Изображения
+        logger.debug(f"� Размещение изображений: {len(cfg.images) if cfg.images else 0}")
         self._place_images(slide, cfg)
 
         # 6. Аудио (если указано)
         if cfg.audio:
+            logger.debug(f"🔍 Добавление аудио: {cfg.audio}")
             self._place_audio(slide, cfg.audio)
 
     def _set_youtube_title_fields(self, slide, cfg: YouTubeTitleSlideConfig) -> None:
@@ -260,26 +290,23 @@ class PresentationBuilder:
             - idx=12: slide_number (номер слайда)
             - idx=13: subtitle (подзаголовок/описание серии)
         """
+        logger.debug(f"🔧 YouTube поля: subtitle='{cfg.subtitle}', series_number={cfg.series_number}")
+        
         # Subtitle (placeholder idx=13 в TitleLayout)
         try:
             subtitle_ph = slide.shapes.placeholders[
                 PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX
             ]
             subtitle_ph.text_frame.text = cfg.subtitle
+            logger.debug(f"🔧 Subtitle установлен в placeholder idx={PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX}")
         except KeyError as e:
-            if self.verbose:
-                print(
-                    f"    ❌ Заполнитель subtitle (idx={PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX}) не найден: {e}"
-                )
+            logger.warning(f"⚠️ Заполнитель subtitle idx={PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX} не найден: {e}")
         except Exception as e:
-            if self.verbose:
-                print(f"    ❌ Ошибка при заполнении subtitle: {e}")
+            logger.error(f"❌ Ошибка при заполнении subtitle: {e}", exc_info=True)
 
         # Series number - пока нет заполнителя в шаблоне
-        if cfg.series_number and self.verbose:
-            print(
-                f"    ℹ Series number '{cfg.series_number}' не добавлен (нет заполнителя)"
-            )
+        if cfg.series_number:
+            logger.debug(f"🔍 Series number '{cfg.series_number}' не добавлен (нет заполнителя)")
 
     def _place_images(self, slide, cfg: BaseSlideConfig) -> None:
         """
@@ -290,18 +317,25 @@ class PresentationBuilder:
             cfg: Конфигурация слайда.
         """
         if not cfg.images:
+            logger.debug("🔍 Нет изображений для размещения")
             return  # Нет изображений - пропускаем
 
+        logger.info(f"🖼️ Размещение изображений для слайда: '{cfg.title}'")
+        
         # Получаем чертёж макета
         # Для YouTubeTitleSlideConfig используем фиксированный макет title_youtube
         if isinstance(cfg, YouTubeTitleSlideConfig):
             layout_type = "title_youtube"
+            logger.debug("🔍 YouTube титульник -> макет 'title_youtube'")
         else:
             layout_type = cfg.layout_type
+            logger.debug(f"🔍 Используем макет из конфига: '{layout_type}'")
 
         try:
             blueprint = self.layouts.get(layout_type)
+            logger.debug(f"🔍 Чертеж макета '{layout_type}': требуется {blueprint.required_images} изображений")
         except KeyError:
+            logger.error(f"❌ Макет '{layout_type}' не зарегистрирован. Доступные: {self.layouts.list_all()}")
             raise KeyError(
                 f"Макет '{layout_type}' не зарегистрирован. "
                 f"Доступные: {self.layouts.list_all()}"
@@ -309,21 +343,20 @@ class PresentationBuilder:
 
         # Проверка количества изображений
         if len(cfg.images) < blueprint.required_images:
-            if self.verbose:
-                print(
-                    f"    ⚠ Ожидалось {blueprint.required_images} изображений, "
-                    f"предоставлено {len(cfg.images)}"
-                )
+            logger.warning(
+                f"⚠️ Ожидалось {blueprint.required_images} изображений, предоставлено {len(cfg.images)}"
+            )
 
         # Размещение каждого изображения
         for i, img_path_str in enumerate(cfg.images):
             if i >= len(blueprint.placements):
                 # Больше изображений, чем размещений - игнорируем лишние
-                if self.verbose:
-                    print(f"    ⚠ Изображение #{i + 1} игнорируется (нет размещения)")
+                logger.warning(f"⚠️ Изображение #{i + 1} '{img_path_str}' игнорируется (нет размещения в макете)")
                 break
 
             try:
+                logger.debug(f"📍 Размещение изображения: {img_path_str}")
+                
                 # Разрешение пути к изображению
                 img_path = self.loader.resolve_image(img_path_str)
 
@@ -335,20 +368,21 @@ class PresentationBuilder:
                     try:
                         # convert_webp_to_png теперь возвращает BytesIO
                         image_source = convert_webp_to_png(img_path)
-                        if self.verbose:
-                            print(
-                                f"    🔄 WebP сконвертирован в памяти: {original_path.name}"
-                            )
+                        logger.debug(f"🔄 WebP сконвертирован в памяти: {original_path.name}")
                     except Exception as e:
                         error_msg = f"Ошибка конвертации WebP {img_path_str}: {e}"
                         self._errors.append(error_msg)
-                        if self.verbose:
-                            print(f"    ✗ {error_msg}")
+                        logger.error(f"❌ {error_msg}", exc_info=True)
                         continue
 
                 # Получение параметров размещения
                 placement = blueprint.placements[i]
                 placement_dict = placement.to_dict()
+                
+                logger.debug(
+                    f"📏 Чертеж: left={placement_dict['left']}, top={placement_dict['top']}, "
+                    f"max_width={placement_dict['max_width']}, max_height={placement_dict['max_height']}"
+                )
 
                 # Умное масштабирование (для BytesIO используем исходный путь)
                 dimensions_source = (
@@ -365,6 +399,22 @@ class PresentationBuilder:
                 top_cm = Cm(placement_dict["top"])
                 width_cm = Cm(width) if width is not None else None
                 height_cm = Cm(height) if height is not None else None
+                
+                logger.debug(
+                    f"📐 Вычислено (см): left={placement_dict['left']:.2f}, top={placement_dict['top']:.2f}, "
+                    f"w={width:.2f if width else 'auto'}, h={height:.2f if height else 'auto'}"
+                )
+                
+                # EMU для детального логирования
+                emu_left = int(left_cm)
+                emu_top = int(top_cm)
+                emu_width = int(width_cm) if width_cm else None
+                emu_height = int(height_cm) if height_cm else None
+                
+                logger.debug(
+                    f"🎯 Финальные EMU: left={emu_left}, top={emu_top}, "
+                    f"width={emu_width or 'auto'}, height={emu_height or 'auto'}"
+                )
 
                 # Добавление изображения на слайд
                 # python-pptx поддерживает как пути (str/Path), так и потоки (BytesIO)
@@ -386,15 +436,13 @@ class PresentationBuilder:
                 # Изображение не найдено - добавляем в ошибки, но продолжаем
                 error_msg = f"Изображение не найдено: {img_path_str}"
                 self._errors.append(error_msg)
-                if self.verbose:
-                    print(f"    ✗ {error_msg}")
+                logger.warning(f"⚠️ {error_msg}")
 
             except Exception as e:
                 # Другая ошибка при добавлении изображения
                 error_msg = f"Ошибка добавления изображения {img_path_str}: {e}"
                 self._errors.append(error_msg)
-                if self.verbose:
-                    print(f"    ✗ {error_msg}")
+                logger.error(f"❌ {error_msg}", exc_info=True)
 
     def _place_audio(self, slide, audio_path_str: str) -> None:
         """
@@ -409,12 +457,14 @@ class PresentationBuilder:
             add_movie с mime_type='video/mp4'. PowerPoint корректно распознает аудио
             при открытии. Объект скрывается за пределами видимой области слайда.
         """
+        logger.info(f"🎵 Добавление медиа: {audio_path_str}")
+        
         try:
             # Разрешаем путь к аудиофайлу
             audio_path = self.loader.resolve_audio(audio_path_str)
-
-            if self.verbose:
-                print(f"    ♪ Добавление аудио: {audio_path.name}")
+            
+            logger.debug(f"🔗 Вставка медиа-блоба: {audio_path.name}, MIME: video/mp4")
+            logger.debug("🔧 Применен audio workaround: Координаты left=0cm, top=-10cm")
 
             # Используем add_movie workaround
             # Геометрия: минимальный размер (1x1 см), вынесен за пределы слайда
@@ -427,21 +477,18 @@ class PresentationBuilder:
                 mime_type="video/mp4",  # Критично для прохождения валидации библиотеки
             )
 
-            if self.verbose:
-                print("    ✓ Аудио добавлено успешно")
+            logger.debug("🔧 Аудио добавлено успешно")
 
         except FileNotFoundError:
             error_msg = f"Аудиофайл не найден: {audio_path_str}"
             self._errors.append(error_msg)
-            if self.verbose:
-                print(f"    ✗ {error_msg}")
+            logger.warning(f"⚠️ Медиа-файл не найден: {audio_path_str}, продолжаем без него")
 
         except Exception as e:
             # Не блокируем генерацию слайда, если аудио не вставилось
             error_msg = f"Ошибка добавления аудио {audio_path_str}: {e}"
             self._errors.append(error_msg)
-            if self.verbose:
-                print(f"    ✗ {error_msg}")
+            logger.error(f"❌ {error_msg}", exc_info=True)
 
     @staticmethod
     def _find_layout(prs: Presentation, layout_name: str):
@@ -455,7 +502,12 @@ class PresentationBuilder:
         Returns:
             Объект макета или None, если не найден.
         """
+        logger.debug(f"🔍 Поиск макета '{layout_name}' в мастере...")
+        
         for layout in prs.slide_layouts:
             if layout.name == layout_name:
+                logger.debug(f"🔧 Макет '{layout_name}' найден")
                 return layout
+        
+        logger.warning(f"⚠️ Макет '{layout_name}' не найден в шаблоне")
         return None
