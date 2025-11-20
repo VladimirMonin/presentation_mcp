@@ -115,91 +115,91 @@ class MediaPlacer:
         """
         Включает автоматическое воспроизведение для медиа-объекта через OXML.
 
-        Этот метод создает сложную XML-структуру <p:timing> для настройки
-        автоматического запуска медиа при открытии слайда ('onBegin').
+        Этот метод ищет медиа-объект в timing структуре слайда по shape_id
+        и устанавливает delay="0" вместо delay="indefinite" для автозапуска.
 
         Args:
             slide: Объект слайда python-pptx.
             shape: Объект медиа-фигуры (результат add_movie).
 
         Note:
-            Это хак для обхода ограничения python-pptx, который не предоставляет
-            API для настройки анимации. Мы напрямую модифицируем XML-дерево слайда.
+            Используется подход из python-pptx issue #427 (@monstarnn):
+            https://github.com/scanny/python-pptx/issues/427
 
-            Структура создает параллельную анимацию <p:par>, которая запускается
-            при старте слайда (delay="0") и вызывает команду playFrom(0.0) для
-            указанного shape_id.
-
-        XML Structure:
-            <p:par> (параллельная анимация)
-              └─ <p:cTn> (timing node с delay=0)
-                   └─ <p:childTnLst>
-                        └─ <p:cmd type="call" cmd="playFrom(0.0)">
-                             └─ <p:tgtEl>
-                                  └─ <p:spTgt spid="{shape_id}" />
+            Структура PowerPoint для медиа:
+            <p:video>
+              <p:cMediaNode>
+                <p:cTn id="X">
+                  <p:stCondLst>
+                    <p:cond delay="indefinite"/> ← меняем на delay="0"
+                  </p:stCondLst>
+                </p:cTn>
+                <p:tgtEl>
+                  <p:spTgt spid="{shape_id}"/> ← по этому ID находим нужное медиа
+                </p:tgtEl>
+              </p:cMediaNode>
+            </p:video>
         """
-        logger.debug(f"🔧 Настройка автозапуска для медиа-объекта")
+        logger.debug(f"� Настройка автозапуска для медиа-объекта")
 
         try:
-            # 1. Получаем или создаем дерево тайминга слайда
-            timing = slide.element.get_or_add_timing()
-            tnLst = timing.tnLst
-            if tnLst is None:
-                tnLst = timing.add_tnLst()
-                logger.debug("🔍 Создан новый timing list для слайда")
-            else:
-                logger.debug("🔍 Использован существующий timing list")
-
-            # 2. Получаем shape_id для привязки анимации к объекту
+            # Получаем shape_id медиа-объекта
             shape_id = shape.shape_id
             logger.debug(f"🔍 Shape ID медиа-объекта: {shape_id}")
 
-            # 3. Генерируем XML для автозапуска
-            # Это стандартная структура PowerPoint для "Start Automatically"
-            xml = f"""
-            <p:par {nsdecls('p')}>
-              <p:cTn id="1" fill="hold" display="0" >
-                <p:stCondLst>
-                  <p:cond delay="0" />
-                </p:stCondLst>
-                <p:childTnLst>
-                  <p:par>
-                    <p:cTn id="2" fill="hold" display="0">
-                      <p:stCondLst>
-                        <p:cond delay="0" />
-                      </p:stCondLst>
-                      <p:childTnLst>
-                        <p:par>
-                          <p:cTn id="3" fill="hold" display="0">
-                            <p:stCondLst>
-                              <p:cond delay="0" />
-                            </p:stCondLst>
-                            <p:childTnLst>
-                              <p:cmd type="call" cmd="playFrom(0.0)">
-                                <p:cBhvr>
-                                  <p:cTn id="4" dur="indefinite" fill="hold" display="0" />
-                                  <p:tgtEl>
-                                    <p:spTgt spid="{shape_id}" />
-                                  </p:tgtEl>
-                                </p:cBhvr>
-                              </p:cmd>
-                            </p:childTnLst>
-                          </p:cTn>
-                        </p:par>
-                      </p:childTnLst>
-                    </p:cTn>
-                  </p:par>
-                </p:childTnLst>
-              </p:cTn>
-            </p:par>
-            """
+            # Получаем root element слайда
+            sld = slide.element
 
-            logger.debug("🔧 XML структура для автозапуска сгенерирована")
+            # Импортируем функцию для преобразования namespace-префиксов
+            from pptx.oxml.ns import qn
 
-            # 4. Парсим XML и добавляем в дерево тайминга
-            par = parse_xml(xml)
-            tnLst.append(par)
-            logger.debug(f"✅ Autoplay включен для shape_id={shape_id}")
+            # Ищем все элементы <p:video> в timing структуре
+            timing_element = sld.find(qn('p:timing'))
+            if timing_element is None:
+                logger.warning(f"⚠️ Не найден <p:timing> на слайде, автозапуск не установлен")
+                error_msg = f"Не найден timing элемент на слайде"
+                self.errors.append(error_msg)
+                return
+
+            # Ищем все <p:video> элементы
+            for video_elem in timing_element.iter(qn('p:video')):
+                # Ищем <p:spTgt> с нужным spid
+                for sp_tgt in video_elem.iter(qn('p:spTgt')):
+                    if sp_tgt.get('spid') == str(shape_id):
+                        logger.debug(f"✅ Найден <p:spTgt spid='{shape_id}'>")
+                        
+                        # Поднимаемся к родительскому <p:cTn>
+                        # Структура: p:spTgt -> p:tgtEl -> p:cMediaNode -> p:cTn
+                        c_media_node = sp_tgt.getparent().getparent()
+                        c_tn = c_media_node.find(qn('p:cTn'))
+                        
+                        if c_tn is None:
+                            logger.warning(f"⚠️ Не найден <p:cTn> для shape_id={shape_id}")
+                            continue
+                        
+                        # Ищем <p:cond> внутри <p:stCondLst>
+                        st_cond_lst = c_tn.find(qn('p:stCondLst'))
+                        if st_cond_lst is None:
+                            logger.warning(f"⚠️ Не найден <p:stCondLst> для shape_id={shape_id}")
+                            continue
+                        
+                        cond = st_cond_lst.find(qn('p:cond'))
+                        if cond is None:
+                            logger.warning(f"⚠️ Не найден <p:cond> для shape_id={shape_id}")
+                            continue
+                        
+                        # Устанавливаем delay="0" для автозапуска
+                        old_delay = cond.get('delay', 'не указан')
+                        cond.set('delay', '0')
+                        
+                        logger.debug(f"🔧 Изменён delay: '{old_delay}' -> '0'")
+                        logger.debug(f"✅ Autoplay включен для shape_id={shape_id}")
+                        return  # Нашли и настроили, выходим
+
+            # Если дошли сюда, значит не нашли нужный spTgt
+            logger.warning(f"⚠️ Не найден <p:spTgt> для shape_id={shape_id}, автозапуск не установлен")
+            error_msg = f"Не найден timing элемент для медиа shape_id={shape_id}"
+            self.errors.append(error_msg)
 
         except Exception as e:
             error_msg = f"Ошибка включения автозапуска: {e}"
