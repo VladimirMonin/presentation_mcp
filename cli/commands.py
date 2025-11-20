@@ -5,6 +5,7 @@ CLI команды для Auto-Slide.
 презентаций и анализа шаблонов.
 """
 
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -12,6 +13,8 @@ from models import LayoutRegistry
 from io_handlers import PathResolver, ConfigLoader, ResourceLoader
 from core import PresentationBuilder, analyze_template
 from config import register_default_layouts
+
+logger = logging.getLogger(__name__)
 
 
 def cmd_generate(
@@ -36,26 +39,30 @@ def cmd_generate(
         >>> cmd_generate("slides_config.json")
         >>> cmd_generate("config.json", output="my_presentation.pptx")
     """
+    logger.info(f"▶️ Запущена команда generate. Config: {config_path}, Output: {output or 'default'}")
+    logger.debug(f"🔍 Параметры: template={template or 'default'}, verbose={verbose}")
+    
     try:
         # Шаг 1: Загрузка конфигурации
         config_path_obj = Path(config_path).resolve()
 
         if not config_path_obj.exists():
-            print(f"✗ Ошибка: Файл конфигурации не найден: {config_path}")
+            logger.error(f"❌ Файл конфигурации не найден: {config_path}")
             return 1
 
-        if verbose:
-            print(f"📖 Загрузка конфигурации: {config_path_obj.name}")
-
+        logger.debug(f"� Загрузка конфигурации: {config_path_obj}")
         config = ConfigLoader.load(config_path_obj)
 
         # Применение переопределений из CLI
         if output:
+            logger.debug(f"🔧 Override output: {output}")
             config.output_path = output
         if template:
+            logger.debug(f"🔧 Override template: {template}")
             config.template_path = template
 
         # Шаг 2: Настройка компонентов
+        logger.debug("🔧 Инициализация компонентов")
         resolver = PathResolver(config_path_obj)
         loader = ResourceLoader(resolver)
         registry = LayoutRegistry()
@@ -67,13 +74,13 @@ def cmd_generate(
         template_path = resolver.resolve(config.template_path)
 
         if not template_path.exists():
-            print(f"✗ Ошибка: Шаблон не найден: {template_path}")
+            logger.error(f"❌ Шаблон не найден: {template_path}")
             return 1
 
         prs = builder.build(config, template_path)
 
         if prs is None:
-            print("✗ Критическая ошибка при сборке презентации")
+            logger.critical("💥 Критическая ошибка при сборке презентации", exc_info=True)
             return 1
 
         # Шаг 4: Сохранение
@@ -83,23 +90,20 @@ def cmd_generate(
         # Проверка на ошибки
         errors = builder.get_errors()
         if errors:
-            print(f"\n⚠ Завершено с {len(errors)} некритичными ошибками")
+            logger.warning(f"⚠️ Завершено с {len(errors)} некритичными ошибками")
             return 2  # Частичный успех
 
+        logger.info("✅ Генерация завершена успешно")
         return 0  # Полный успех
 
     except FileNotFoundError as e:
-        print(f"✗ Ошибка: Файл не найден: {e}")
+        logger.error(f"❌ Файл не найден: {e}", exc_info=True)
         return 1
     except ValueError as e:
-        print(f"✗ Ошибка валидации: {e}")
+        logger.error(f"❌ Ошибка валидации: {e}", exc_info=True)
         return 1
     except Exception as e:
-        print(f"✗ Неожиданная ошибка: {e}")
-        if verbose:
-            import traceback
-
-            traceback.print_exc()
+        logger.critical(f"💥 Критическая ошибка при генерации: {e}", exc_info=True)
         return 1
 
 
@@ -122,29 +126,37 @@ def cmd_analyze(
         >>> cmd_analyze("template.pptx", layout="CustomLayout")
         >>> cmd_analyze("template.pptx", list_only=True)
     """
+    logger.info(f"▶️ Запущена команда analyze для {template_path}")
+    logger.debug(f"🔍 Параметры: layout={layout}, list_only={list_only}")
+    
     try:
         template_path_obj = Path(template_path).resolve()
 
         if not template_path_obj.exists():
-            print(f"✗ Ошибка: Файл не найден: {template_path}")
+            logger.error(f"❌ Файл не найден: {template_path}")
             return 1
 
         if list_only:
+            logger.debug("📋 Режим: только список макетов")
             from core import list_layouts
 
             list_layouts(template_path_obj)
         else:
+            logger.debug(f"🔍 Анализ макета: {layout}")
             analyze_template(template_path_obj, layout)
 
+        logger.info("✅ Анализ завершен успешно")
         return 0
 
     except Exception as e:
-        print(f"✗ Ошибка: {e}")
+        logger.error(f"❌ Ошибка при анализе: {e}", exc_info=True)
         return 1
 
 
 def cmd_help() -> None:
     """Выводит справку по использованию CLI."""
+    logger.info("❓ Запрошена справка")
+    
     help_text = """
 ╔══════════════════════════════════════════════════════════════════╗
 ║                  Auto-Slide: PowerPoint Automation               ║
@@ -222,16 +234,19 @@ def parse_args(args: list) -> int:
     Returns:
         Exit code (0 = success, >0 = error).
     """
+    logger.debug(f"🔍 Парсинг аргументов CLI: {args}")
+    
     if not args or args[0] in ["help", "--help", "-h"]:
+        logger.debug("📋 Вызвана справка")
         cmd_help()
         return 0
 
     command = args[0]
+    logger.debug(f"🔧 Команда: {command}")
 
     if command == "generate":
         if len(args) < 2:
-            print("✗ Ошибка: Не указан файл конфигурации")
-            print("Использование: python main.py generate <config.json> [опции]")
+            logger.error("❌ Не указан файл конфигурации для generate")
             return 1
 
         config_path = args[1]
@@ -244,23 +259,25 @@ def parse_args(args: list) -> int:
         while i < len(args):
             if args[i] in ["-o", "--output"] and i + 1 < len(args):
                 output = args[i + 1]
+                logger.debug(f"🔧 CLI опция: output={output}")
                 i += 2
             elif args[i] in ["-t", "--template"] and i + 1 < len(args):
                 template = args[i + 1]
+                logger.debug(f"🔧 CLI опция: template={template}")
                 i += 2
             elif args[i] in ["-q", "--quiet"]:
                 verbose = False
+                logger.debug("🔧 CLI опция: quiet mode")
                 i += 1
             else:
-                print(f"⚠ Неизвестная опция: {args[i]}")
+                logger.warning(f"⚠️ Неизвестная опция CLI: {args[i]}")
                 i += 1
 
         return cmd_generate(config_path, output, template, verbose)
 
     elif command == "analyze":
         if len(args) < 2:
-            print("✗ Ошибка: Не указан файл шаблона")
-            print("Использование: python main.py analyze <template.pptx> [опции]")
+            logger.error("❌ Не указан файл шаблона для analyze")
             return 1
 
         template_path = args[1]
@@ -272,17 +289,18 @@ def parse_args(args: list) -> int:
         while i < len(args):
             if args[i] in ["-l", "--layout"] and i + 1 < len(args):
                 layout = args[i + 1]
+                logger.debug(f"🔧 CLI опция: layout={layout}")
                 i += 2
             elif args[i] == "--list":
                 list_only = True
+                logger.debug("🔧 CLI опция: list only mode")
                 i += 1
             else:
-                print(f"⚠ Неизвестная опция: {args[i]}")
+                logger.warning(f"⚠️ Неизвестная опция CLI: {args[i]}")
                 i += 1
 
         return cmd_analyze(template_path, layout, list_only)
 
     else:
-        print(f"✗ Неизвестная команда: {command}")
-        print("Используйте 'python main.py help' для справки")
+        logger.error(f"❌ Неизвестная команда: {command}")
         return 1
