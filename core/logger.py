@@ -18,23 +18,29 @@ from logging.handlers import RotatingFileHandler
 class SafeConsoleHandler(logging.StreamHandler):
     """
     StreamHandler с защитой от UnicodeEncodeError в Windows console (cp1251).
-    При ошибке кодировки заменяет символы на '?' вместо краша.
+    При ошибке кодировки заменяет эмодзи и другие символы на '?' вместо краша.
     """
 
     def emit(self, record):
         try:
-            super().emit(record)
+            msg = self.format(record)
+            stream = self.stream
+            # Попытка записать с родной кодировкой
+            stream.write(msg + self.terminator)
+            self.flush()
         except UnicodeEncodeError:
-            # Fallback: заменяем непечатаемые символы (эмодзи) на '?'
+            # Fallback: заменяем непечатаемые символы на '?'
             try:
                 msg = self.format(record)
-                safe_msg = msg.encode(
-                    self.stream.encoding or "utf-8", errors="replace"
-                ).decode(self.stream.encoding or "utf-8")
+                # Кодируем с заменой эмодзи на '?', затем декодируем обратно
+                encoding = self.stream.encoding or "utf-8"
+                safe_msg = msg.encode(encoding, errors="replace").decode(encoding)
                 self.stream.write(safe_msg + self.terminator)
                 self.flush()
             except Exception:
                 self.handleError(record)
+        except Exception:
+            self.handleError(record)
 
 
 def setup_logging(verbose: bool = False, log_dir: str = "logs"):
