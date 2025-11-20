@@ -41,7 +41,6 @@ htmlcov/
 .pytest_cache/
 
 # Images (user content)
-images/
 !images/.gitkeep
 
 # OS
@@ -49,3 +48,5 @@ images/
 Thumbs.db
 
 logs/
+tests/test_data/*.pptx
+tests/test_data/*.mp4
