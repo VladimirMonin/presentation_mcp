@@ -13,6 +13,12 @@ from models import (
     LayoutBlueprint,
     LayoutRegistry,
 )
+from models.slide_types import (
+    BaseSlideConfig,
+    ContentSlideConfig,
+    YouTubeTitleSlideConfig,
+)
+from models.slide_factory import SlideConfigFactory
 
 
 class TestSlideConfig:
@@ -90,10 +96,11 @@ class TestPresentationConfig:
             PresentationConfig(slides=[])
 
     def test_dict_to_slideconfig_conversion(self):
-        """Автоконвертация словарей в SlideConfig."""
+        """Автоконвертация словарей в BaseSlideConfig через фабрику."""
         config = PresentationConfig(
             slides=[
                 {
+                    "slide_type": "content",
                     "layout_type": "single_wide",
                     "title": "Title",
                     "notes_source": "notes",
@@ -102,7 +109,7 @@ class TestPresentationConfig:
             ]
         )
 
-        assert isinstance(config.slides[0], SlideConfig)
+        assert isinstance(config.slides[0], ContentSlideConfig)
         assert config.slides[0].title == "Title"
 
 
@@ -265,3 +272,179 @@ class TestLayoutRegistry:
         assert len(all_layouts) == 2
         assert "layout1" in all_layouts
         assert "layout2" in all_layouts
+
+
+class TestContentSlideConfig:
+    """Тесты для ContentSlideConfig."""
+
+    def test_create_valid_content_slide(self):
+        """Создание валидного контентного слайда."""
+        slide = ContentSlideConfig(
+            layout_type="single_wide",
+            title="Test Content",
+            notes_source="notes.md",
+            images=["img1.png"],
+        )
+
+        assert slide.SLIDE_TYPE == "content"
+        assert slide.layout_type == "single_wide"
+        assert slide.title == "Test Content"
+        assert slide.images == ["img1.png"]
+
+    def test_content_slide_to_dict(self):
+        """Сериализация ContentSlideConfig в dict."""
+        slide = ContentSlideConfig(
+            layout_type="two_stack",
+            title="My Slide",
+            notes_source="text",
+            images=["a.png", "b.png"],
+            layout_name="VideoLayout",
+        )
+
+        d = slide.to_dict()
+
+        assert d["slide_type"] == "content"
+        assert d["layout_type"] == "two_stack"
+        assert d["title"] == "My Slide"
+        assert d["layout_name"] == "VideoLayout"
+        assert len(d["images"]) == 2
+
+    def test_content_slide_missing_layout_type(self):
+        """Отсутствие layout_type вызывает ошибку."""
+        with pytest.raises(ValueError, match="layout_type не может быть пустым"):
+            ContentSlideConfig(
+                layout_type="", title="Title", notes_source="notes", images=[]
+            )
+
+
+class TestYouTubeTitleSlideConfig:
+    """Тесты для YouTubeTitleSlideConfig."""
+
+    def test_create_valid_youtube_title(self):
+        """Создание валидного титульного слайда YouTube."""
+        slide = YouTubeTitleSlideConfig(
+            layout_type="title_youtube",  # Указываем фиксированный layout_type
+            title="Мой канал",
+            subtitle="Видео о Python",
+            notes_source="intro.md",
+            images=["logo.png"],
+        )
+
+        assert slide.SLIDE_TYPE == "title_youtube"
+        assert slide.title == "Мой канал"
+        assert slide.subtitle == "Видео о Python"
+        assert slide.series_number is None
+        assert slide.images == ["logo.png"]
+        assert slide.layout_name == "TitleLayout"  # Автоматически установлен
+
+    def test_youtube_title_with_series_number(self):
+        """Титульный слайд с номером серии."""
+        slide = YouTubeTitleSlideConfig(
+            layout_type="title_youtube",
+            title="Название канала",
+            subtitle="Описание серии",
+            series_number="Часть 3",
+            notes_source="notes",
+            images=["logo.png"],
+        )
+
+        assert slide.series_number == "Часть 3"
+
+    def test_youtube_title_missing_subtitle(self):
+        """Отсутствие subtitle вызывает ошибку."""
+        with pytest.raises(ValueError, match="subtitle"):
+            YouTubeTitleSlideConfig(
+                layout_type="title_youtube",
+                title="Channel",
+                subtitle="",
+                notes_source="notes",
+                images=["logo.png"],
+            )
+
+    def test_youtube_title_to_dict(self):
+        """Сериализация YouTubeTitleSlideConfig в dict."""
+        slide = YouTubeTitleSlideConfig(
+            layout_type="title_youtube",
+            title="Test Channel",
+            subtitle="Episode description",
+            series_number="Part 1",
+            notes_source="my_notes.md",
+            images=["channel_logo.webp"],
+        )
+
+        d = slide.to_dict()
+
+        assert d["slide_type"] == "title_youtube"
+        assert d["title"] == "Test Channel"
+        assert d["subtitle"] == "Episode description"
+        assert d["series_number"] == "Part 1"
+        assert d["layout_name"] == "TitleLayout"
+        assert d["images"] == ["channel_logo.webp"]
+
+
+class TestSlideConfigFactory:
+    """Тесты для SlideConfigFactory."""
+
+    def test_factory_create_content_slide(self):
+        """Фабрика создаёт ContentSlideConfig из dict."""
+        data = {
+            "slide_type": "content",
+            "layout_type": "single_wide",
+            "title": "Test",
+            "notes_source": "notes.md",
+            "images": ["img.png"],
+        }
+
+        slide = SlideConfigFactory.create(data)
+
+        assert isinstance(slide, ContentSlideConfig)
+        assert slide.layout_type == "single_wide"
+        assert slide.title == "Test"
+
+    def test_factory_create_youtube_title(self):
+        """Фабрика создаёт YouTubeTitleSlideConfig из dict."""
+        data = {
+            "slide_type": "title_youtube",
+            "layout_type": "title_youtube",
+            "title": "My Channel",
+            "subtitle": "Cool videos",
+            "notes_source": "intro",
+            "images": ["logo.jpg"],
+        }
+
+        slide = SlideConfigFactory.create(data)
+
+        assert isinstance(slide, YouTubeTitleSlideConfig)
+        assert slide.title == "My Channel"
+        assert slide.subtitle == "Cool videos"
+
+    def test_factory_unknown_slide_type(self):
+        """Неизвестный slide_type вызывает ошибку."""
+        data = {
+            "slide_type": "unknown_type",
+            "title": "Test",
+        }
+
+        with pytest.raises(ValueError, match="Неизвестный slide_type"):
+            SlideConfigFactory.create(data)
+
+    def test_factory_missing_slide_type(self):
+        """Отсутствие slide_type создаёт ContentSlideConfig по умолчанию."""
+        data = {
+            "layout_type": "single_wide",
+            "title": "Test",
+            "notes_source": "notes",
+        }
+
+        slide = SlideConfigFactory.create(data)
+
+        assert isinstance(slide, ContentSlideConfig)
+        assert slide.SLIDE_TYPE == "content"
+
+    def test_factory_get_registered_types(self):
+        """Получение списка зарегистрированных типов."""
+        types = SlideConfigFactory.get_registered_types()
+
+        assert "content" in types
+        assert "title_youtube" in types
+        assert len(types) >= 2

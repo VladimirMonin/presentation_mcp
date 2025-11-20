@@ -77,21 +77,20 @@ class ConfigLoader:
             if not isinstance(slides_data, list):
                 raise ValueError("Поле 'slides' должно быть массивом")
 
-            # Парсим слайды
-            slides = []
+            # Парсим слайды - передаем словари напрямую!
+            # PresentationConfig.__post_init__ сам вызовет фабрику
+            slides_data_list = []
             for i, slide_data in enumerate(slides_data, 1):
-                try:
-                    slide = ConfigLoader._parse_slide(slide_data)
-                    slides.append(slide)
-                except Exception as e:
-                    raise ValueError(f"Ошибка в слайде #{i}: {e}") from e
+                if not isinstance(slide_data, dict):
+                    raise ValueError(f"Слайд #{i} должен быть объектом JSON")
+                slides_data_list.append(slide_data)
 
             # Создаём конфигурацию
             config = PresentationConfig(
                 template_path=data.get("template_path", "template.pptx"),
                 output_path=data.get("output_path", "output.pptx"),
                 layout_name=data.get("layout_name", "VideoLayout"),
-                slides=slides,
+                slides=slides_data_list,  # Передаем словари!
             )
 
             return config
@@ -145,19 +144,12 @@ class ConfigLoader:
         """
         json_path = Path(json_path)
 
+        # Используем to_dict() из BaseSlideConfig для сериализации
         data = {
             "template_path": config.template_path,
             "output_path": config.output_path,
             "layout_name": config.layout_name,
-            "slides": [
-                {
-                    "layout_type": slide.layout_type,
-                    "title": slide.title,
-                    "notes_source": slide.notes_source,
-                    "images": slide.images,
-                }
-                for slide in config.slides
-            ],
+            "slides": [slide.to_dict() for slide in config.slides],
         }
 
         with open(json_path, "w", encoding="utf-8") as f:

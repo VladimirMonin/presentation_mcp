@@ -10,14 +10,21 @@ from typing import Optional
 from pptx import Presentation
 from pptx.util import Cm
 
-from models import PresentationConfig, SlideConfig, LayoutRegistry
+from models import PresentationConfig, LayoutRegistry
+from models.slide_types import BaseSlideConfig, YouTubeTitleSlideConfig
 from io_handlers import ResourceLoader
 from core import (
     clean_markdown_for_notes,
     calculate_smart_dimensions,
     convert_webp_to_png,
 )
-from config import PLACEHOLDER_TITLE_IDX, PLACEHOLDER_SLIDE_NUM_IDX
+from config import (
+    PLACEHOLDER_TITLE_IDX,
+    PLACEHOLDER_SLIDE_NUM_IDX,
+    PLACEHOLDER_TITLE_LAYOUT_TITLE_IDX,
+    PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX,
+    PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX,
+)
 
 
 class PresentationBuilder:
@@ -179,7 +186,7 @@ class PresentationBuilder:
         return self._errors.copy()
 
     def _add_slide(
-        self, prs: Presentation, layout, cfg: SlideConfig, number: int
+        self, prs: Presentation, layout, cfg: BaseSlideConfig, number: int
     ) -> None:
         """
         Добавляет один слайд в презентацию.
@@ -187,7 +194,7 @@ class PresentationBuilder:
         Args:
             prs: Объект презентации.
             layout: Макет слайда из шаблона.
-            cfg: Конфигурация слайда.
+            cfg: Конфигурация слайда (BaseSlideConfig или его подклассы).
             number: Номер слайда (для отображения).
         """
         # Создание слайда
@@ -196,33 +203,81 @@ class PresentationBuilder:
         # Workaround для PowerPoint 2013
         _ = slide.notes_slide
 
+        # Определяем, используется ли TitleLayout
+        is_title_layout = isinstance(cfg, YouTubeTitleSlideConfig)
+
+        # Выбираем правильные индексы в зависимости от типа макета
+        if is_title_layout:
+            idx_title = PLACEHOLDER_TITLE_LAYOUT_TITLE_IDX
+            idx_slide_num = PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX
+        else:
+            idx_title = self.idx_title
+            idx_slide_num = self.idx_slide_num
+
         # 1. Заголовок
         try:
-            title_ph = slide.shapes.placeholders[self.idx_title]
+            title_ph = slide.shapes.placeholders[idx_title]
             title_ph.text_frame.text = cfg.title
         except KeyError:
-            raise KeyError(
-                f"Заполнитель заголовка с индексом {self.idx_title} не найден"
-            )
+            raise KeyError(f"Заполнитель заголовка с индексом {idx_title} не найден")
 
-        # 2. Номер слайда
+        # 2. Дополнительные поля для YouTubeTitleSlideConfig
+        if is_title_layout:
+            self._set_youtube_title_fields(slide, cfg)
+
+        # 3. Номер слайда
         try:
-            num_ph = slide.shapes.placeholders[self.idx_slide_num]
+            num_ph = slide.shapes.placeholders[idx_slide_num]
             num_ph.text_frame.text = str(number)
         except KeyError:
             # Номер не критичен, можно продолжить
             if self.verbose:
-                print(f"    ⚠ Заполнитель номера ({self.idx_slide_num}) не найден")
+                print(f"    ⚠ Заполнитель номера ({idx_slide_num}) не найден")
 
-        # 3. Заметки докладчика
+        # 4. Заметки докладчика
         notes_text = self.loader.load_notes(cfg.notes_source)
         clean_notes = clean_markdown_for_notes(notes_text)
         slide.notes_slide.notes_text_frame.text = clean_notes
 
-        # 4. Изображения
+        # 5. Изображения
         self._place_images(slide, cfg)
 
-    def _place_images(self, slide, cfg: SlideConfig) -> None:
+    def _set_youtube_title_fields(self, slide, cfg: YouTubeTitleSlideConfig) -> None:
+        """
+        Устанавливает специфичные поля для YouTubeTitleSlideConfig.
+
+        Args:
+            slide: Объект слайда.
+            cfg: Конфигурация титульного слайда YouTube.
+
+        Note:
+            Индексы заполнителей для TitleLayout в youtube_base.pptx:
+            - idx=10: title (основной заголовок)
+            - idx=12: slide_number (номер слайда)
+            - idx=13: subtitle (подзаголовок/описание серии)
+        """
+        # Subtitle (placeholder idx=13 в TitleLayout)
+        try:
+            subtitle_ph = slide.shapes.placeholders[
+                PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX
+            ]
+            subtitle_ph.text_frame.text = cfg.subtitle
+        except KeyError as e:
+            if self.verbose:
+                print(
+                    f"    ❌ Заполнитель subtitle (idx={PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX}) не найден: {e}"
+                )
+        except Exception as e:
+            if self.verbose:
+                print(f"    ❌ Ошибка при заполнении subtitle: {e}")
+
+        # Series number - пока нет заполнителя в шаблоне
+        if cfg.series_number and self.verbose:
+            print(
+                f"    ℹ Series number '{cfg.series_number}' не добавлен (нет заполнителя)"
+            )
+
+    def _place_images(self, slide, cfg: BaseSlideConfig) -> None:
         """
         Размещает изображения на слайде согласно макету.
 
@@ -234,11 +289,17 @@ class PresentationBuilder:
             return  # Нет изображений - пропускаем
 
         # Получаем чертёж макета
+        # Для YouTubeTitleSlideConfig используем фиксированный макет title_youtube
+        if isinstance(cfg, YouTubeTitleSlideConfig):
+            layout_type = "title_youtube"
+        else:
+            layout_type = cfg.layout_type
+
         try:
-            blueprint = self.layouts.get(cfg.layout_type)
+            blueprint = self.layouts.get(layout_type)
         except KeyError:
             raise KeyError(
-                f"Макет '{cfg.layout_type}' не зарегистрирован. "
+                f"Макет '{layout_type}' не зарегистрирован. "
                 f"Доступные: {self.layouts.list_all()}"
             )
 

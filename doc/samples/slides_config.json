@@ -1,9 +1,10 @@
 {
-  "template_path": "c:\\PY\\presentation_mcp\\template.pptx",
+  "template_path": "templates/youtube_base.pptx",
   "layout_name": "VideoLayout",
   "output_path": "c:\\PY\\presentation_mcp\\output.pptx",
   "slides": [
     {
+      "slide_type": "content",
       "layout_type": "single_wide",
       "title": "Качаем VS Code",
       "notes_source": "Сейчас мы должны скачать VS Code\n- Пункт 1 - Скачать\n- Пункт 2 - Установить",
@@ -12,6 +13,7 @@
       ]
     },
     {
+      "slide_type": "content",
       "layout_type": "single_tall",
       "title": "Обзор расширений VS Code",
       "notes_source": "Вот такие есть расширения для Python в VS Code...",
@@ -20,6 +22,7 @@
       ]
     },
     {
+      "slide_type": "content",
       "layout_type": "two_stack",
       "title": "Cline и Excalidraw",
       "notes_source": "На двух скриншотах мы видим расширения Cline и Excalidraw для VS Code.",
@@ -29,6 +32,7 @@
       ]
     },
     {
+      "slide_type": "content",
       "layout_type": "two_tall_row",
       "title": "Спасибо за внимание!",
       "notes_source": "Если есть вопросы, задавайте их сейчас.",

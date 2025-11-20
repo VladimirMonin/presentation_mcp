@@ -8,6 +8,9 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from models.slide_types import BaseSlideConfig
+from models.slide_factory import SlideConfigFactory
+
 
 @dataclass
 class SlideConfig:
@@ -63,6 +66,8 @@ class PresentationConfig:
 
     Attributes:
         slides: Список конфигураций слайдов (обязательное поле).
+                Может содержать как SlideConfig (для обратной совместимости),
+                так и BaseSlideConfig (ContentSlideConfig, YouTubeTitleSlideConfig и др.).
         template_path: Путь к файлу шаблона .pptx (может быть относительным или абсолютным).
                        По умолчанию: "template.pptx".
         output_path: Путь для сохранения итоговой презентации.
@@ -72,28 +77,37 @@ class PresentationConfig:
 
     Example JSON:
         {
-            "template_path": "template.pptx",
+            "template_path": "templates/youtube_base.pptx",
             "output_path": "my_presentation.pptx",
             "layout_name": "VideoLayout",
             "slides": [
                 {
+                    "slide_type": "content",
                     "layout_type": "single_wide",
                     "title": "Заголовок",
                     "notes_source": "notes/slide1.md",
                     "images": ["images/pic1.png"]
+                },
+                {
+                    "slide_type": "title_youtube",
+                    "title": "Мой канал",
+                    "subtitle": "Серия видео о Python",
+                    "series_number": "Часть 1",
+                    "notes_source": "notes/intro.md",
+                    "images": ["images/logo.png"]
                 }
             ]
         }
 
     Example:
         >>> config = PresentationConfig(
-        ...     template_path="custom_template.pptx",
+        ...     template_path="templates/youtube_base.pptx",
         ...     output_path="result.pptx",
         ...     slides=[slide1, slide2]
         ... )
     """
 
-    slides: List[SlideConfig]
+    slides: List[BaseSlideConfig]
     template_path: str = "template.pptx"
     output_path: str = "output.pptx"
     layout_name: str = "VideoLayout"
@@ -103,10 +117,30 @@ class PresentationConfig:
         if not self.slides:
             raise ValueError("slides не может быть пустым списком")
 
-        # Конвертируем словари в SlideConfig если нужно
-        self.slides = [
-            SlideConfig(**s) if isinstance(s, dict) else s for s in self.slides
-        ]
+        # Конвертируем словари в BaseSlideConfig через фабрику если нужно
+        converted_slides = []
+        for s in self.slides:
+            if isinstance(s, dict):
+                # Используем фабрику для создания правильного типа слайда
+                converted_slides.append(SlideConfigFactory.create(s))
+            elif isinstance(s, SlideConfig):
+                # Конвертируем старый SlideConfig в ContentSlideConfig для обратной совместимости
+                from models.slide_types import ContentSlideConfig
+
+                converted_slides.append(
+                    ContentSlideConfig(
+                        layout_type=s.layout_type,
+                        title=s.title,
+                        notes_source=s.notes_source,
+                        images=s.images,
+                        layout_name=s.layout_name,
+                    )
+                )
+            else:
+                # Уже BaseSlideConfig или его подкласс
+                converted_slides.append(s)
+
+        self.slides = converted_slides
 
 
 # Вспомогательные функции для работы с конфигурацией

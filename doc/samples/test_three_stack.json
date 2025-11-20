@@ -1,9 +1,10 @@
 {
-  "template_path": "c:\\PY\\presentation_mcp\\template.pptx",
+  "template_path": "templates/youtube_base.pptx",
   "layout_name": "VideoLayout",
   "output_path": "c:\\PY\\presentation_mcp\\output_three_stack.pptx",
   "slides": [
     {
+      "slide_type": "content",
       "layout_type": "three_stack",
       "title": "Три шага установки",
       "notes_source": "На этом слайде показаны три последовательных шага установки VS Code:\n- Шаг 1: Скачивание\n- Шаг 2: Установка расширений\n- Шаг 3: Настройка",

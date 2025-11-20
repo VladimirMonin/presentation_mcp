@@ -1,0 +1,31 @@
+{
+  "template_path": "templates/youtube_base.pptx",
+  "layout_name": "VideoLayout",
+  "output_path": "youtube_presentation.pptx",
+  "slides": [
+    {
+      "slide_type": "title_youtube",
+      "layout_type": "title_youtube",
+      "layout_name": "TitleLayout",
+      "title": "Мой Канал о Python",
+      "subtitle": "Полное руководство для начинающих",
+      "series_number": "Часть 1",
+      "notes_source": "Добро пожаловать на мой канал! Сегодня мы начинаем серию видео о Python.",
+      "images": ["images/channel_logo_square.png"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_wide",
+      "title": "Установка Python",
+      "notes_source": "В этом разделе мы рассмотрим процесс установки Python на разные операционные системы.",
+      "images": ["images/python_download_page.png"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "two_stack",
+      "title": "Первая программа",
+      "notes_source": "Напишем классическое 'Hello World' и запустим его в терминале.",
+      "images": ["images/hello_code.png", "images/hello_output.png"]
+    }
+  ]
+}

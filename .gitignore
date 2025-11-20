@@ -30,7 +30,7 @@ ENV/
 cline_mcp_settings.json
 
 # Output files
-*.pptx
+
 !template.pptx  # keep template
 output/
 results/
