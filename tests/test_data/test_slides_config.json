@@ -1,0 +1,36 @@
+{
+  "template_path": "templates/youtube_base.pptx",
+  "output_path": "tests/test_data/test_output.pptx",
+  "layout_name": "VideoLayout",
+  "slides": [
+    {
+      "slide_type": "title_youtube",
+      "layout_type": "single_wide",
+      "layout_name": "TitleLayout",
+      "title": "Установка Visual Studio Code",
+      "subtitle": "Полное руководство для начинающих",
+      "series_number": "Урок #1",
+      "notes_source": "Обложка презентации о том, как установить VS Code - лучший редактор кода с открытым исходным кодом.",
+      "images": ["images/cover.webp"]
+    },
+    {
+      "layout_type": "two_stack",
+      "title": "Шаг 1: Скачивание VS Code",
+      "notes_source": "Переходим на официальный сайт code.visualstudio.com и скачиваем установщик для Windows. Доступны версии для разных платформ.",
+      "images": ["images/1_1.webp", "images/1_2.webp"],
+      "audio": "images/test_audio.mp3"
+    },
+    {
+      "layout_type": "two_tall_row",
+      "title": "Шаг 2: Открытие папки проекта",
+      "notes_source": "После установки открываем VS Code и выбираем папку с проектом через меню File > Open Folder или через контекстное меню Windows.",
+      "images": ["images/2_1.webp", "images/2_2.webp"]
+    },
+    {
+      "layout_type": "single_wide",
+      "title": "Bonus: GIF тест",
+      "notes_source": "Проверяем что GIF-файлы корректно вставляются в презентацию. VS Code - мощный инструмент для разработки!",
+      "images": ["images/test_gif.gif"]
+    }
+  ]
+}

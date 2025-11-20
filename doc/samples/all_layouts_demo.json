@@ -1,0 +1,58 @@
+{
+  "template_path": "templates/youtube_base.pptx",
+  "layout_name": "ContentLayout",
+  "output_path": "all_layouts_demo.pptx",
+  "slides": [
+    {
+      "slide_type": "youtube_title",
+      "layout_type": "title_youtube",
+      "title": "Демонстрация всех макетов",
+      "subtitle": "Полный обзор 6 встроенных layouts",
+      "series_number": "#DEMO",
+      "images": ["images/logo.png"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_wide",
+      "title": "Макет 1: single_wide",
+      "notes_source": "Одно широкое изображение (16:9). Идеально для горизонтальных скриншотов, диаграмм, панорам.",
+      "images": ["images/wide_screenshot.jpg"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_tall",
+      "title": "Макет 2: single_tall",
+      "notes_source": "Одно высокое изображение (9:16). Отлично для вертикальных скриншотов мобильных приложений, портретных фото.",
+      "images": ["images/mobile_screenshot.jpg"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "two_stack",
+      "title": "Макет 3: two_stack",
+      "notes_source": "Два изображения вертикально. Используется для сравнения 'до/после', разных вариантов, последовательности шагов.",
+      "images": ["images/before.jpg", "images/after.jpg"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "two_tall_row",
+      "title": "Макет 4: two_tall_row",
+      "notes_source": "Два высоких изображения рядом. Подходит для сравнения вертикальных UI, двух мобильных экранов.",
+      "images": ["images/mobile_variant_a.jpg", "images/mobile_variant_b.jpg"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "three_stack",
+      "title": "Макет 5: three_stack",
+      "notes_source": "Три изображения вертикально. Используется для последовательности шагов, трёх этапов процесса.",
+      "images": ["images/step1.jpg", "images/step2.jpg", "images/step3.jpg"]
+    },
+    {
+      "slide_type": "youtube_title",
+      "layout_type": "title_youtube",
+      "title": "Макет 6: title_youtube",
+      "subtitle": "Титульный слайд для YouTube видео",
+      "series_number": "#6",
+      "images": ["images/channel_avatar.png"]
+    }
+  ]
+}

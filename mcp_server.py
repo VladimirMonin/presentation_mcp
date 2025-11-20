@@ -6,12 +6,15 @@ MCP Server для Presentation Builder
 через Model Context Protocol.
 """
 
+import logging
 from mcp.server.fastmcp import FastMCP
 from pathlib import Path
 from models import LayoutRegistry
 from io_handlers import ConfigLoader, PathResolver, ResourceLoader
 from core import PresentationBuilder
 from config import register_default_layouts
+
+logger = logging.getLogger(__name__)
 
 # Создаём MCP сервер
 mcp = FastMCP("Presentation Builder")
@@ -28,20 +31,34 @@ def generate_presentation(config_path: str) -> str:
         config_path: Абсолютный путь к JSON файлу.
 
     Supported Layout Types (layout_type):
-        - single_wide (1 img, 16:9)
-        - single_tall (1 img, 9:16)
-        - two_stack (2 imgs, vertical)
-        - two_tall_row (2 imgs, horizontal)
-        - three_stack (3 imgs, vertical)
+        - single_wide (1 img, 16:9 horizontal)
+        - single_tall (1 img, 9:16 vertical)
+        - two_stack (2 imgs, vertical stack)
+        - two_tall_row (2 imgs, horizontal row)
+        - three_stack (3 imgs, vertical stack)
 
     Supported Image Formats:
         - BMP, GIF, JPEG, PNG, TIFF, WMF (native)
         - WebP (auto-converted to PNG)
+        - GIF: animations are preserved! ✨
 
     Supported Audio Formats:
         - MP3, WAV, M4A and other audio formats
         - Audio is automatically hidden off-slide (not visible)
         - Optional per-slide basis
+
+    ⚠️ IMPORTANT: Multiple Layouts in ONE Template File
+        You can use DIFFERENT PowerPoint slide layouts in one presentation,
+        but they must ALL be in the SAME .pptx template file!
+        
+        Example: Create TitleLayout, VideoLayout, SectionLayout in ONE template
+        using PowerPoint's Slide Master view. Then override per slide:
+        
+        - Global layout_name: "VideoLayout" (default for all slides)
+        - Per-slide layout_name: "TitleLayout" (override for specific slide)
+        
+        ❌ NOT SUPPORTED: Multiple template files (python-pptx limitation)
+        ✅ SUPPORTED: Multiple layouts in one template file
 
     Path Resolution:
         - template_path: relative → server dir, absolute → as is
@@ -75,24 +92,15 @@ def generate_presentation(config_path: str) -> str:
                     "notes_source": "Slide with voiceover",
                     "images": ["img1.png", "img2.png"],
                     "audio": "audio/voiceover.wav"
+                },
+                {
+                    "layout_type": "single_wide",
+                    "title": "Animated GIF Slide",
+                    "notes_source": "GIF animation preserved",
+                    "images": ["animation.gif"]
                 }
             ]
         }
-
-    NEW: Per-Slide Layout Override
-        You can now use different PowerPoint layouts in one presentation!
-        - Global layout_name: used by default for all slides
-        - Per-slide layout_name: overrides global for specific slides
-
-        Example use cases:
-        - Title slide + content slides
-        - Section dividers + content
-        - Different slide styles in one deck
-
-        ⚠️ IMPORTANT: Use ONE template file with MULTIPLE layouts inside!
-        The system does NOT support multiple .pptx files due to python-pptx limitations.
-        Create TitleLayout, VideoLayout, etc. in the same template file using
-        PowerPoint's Slide Master view.
 
     Returns:
         Сообщение о результате создания презентации с путём к файлу
@@ -101,11 +109,16 @@ def generate_presentation(config_path: str) -> str:
         generate_presentation("C:/projects/my_slides.json")
         -> "✅ Презентация создана: C:/projects/output.pptx\n📊 Создано слайдов: 5"
     """
+    logger.info(f"🤖 MCP запрос: generate_presentation")
+    logger.debug(f"📋 Путь к конфигурации: {config_path}")
+    
     try:
         # Проверяем существование файла
         config_file = Path(config_path).resolve()
+        logger.debug(f"🔍 Проверка существования файла: {config_file}")
 
         if not config_file.exists():
+            logger.error(f"❌ Файл конфигурации не найден: {config_file}")
             return (
                 f"❌ Ошибка: Файл конфигурации не найден\n"
                 f"📁 Путь: {config_file}\n"
@@ -113,22 +126,30 @@ def generate_presentation(config_path: str) -> str:
             )
 
         if not config_file.suffix.lower() == ".json":
+            logger.error(f"❌ Неверное расширение файла: {config_path}")
             return f"❌ Ошибка: Файл должен иметь расширение .json: {config_path}"
 
         # Загружаем конфигурацию
+        logger.debug(f"📂 Загрузка конфигурации из {config_file.name}")
         config = ConfigLoader.load(config_file)
 
         # Проверяем что есть слайды
         if not config.slides:
+            logger.error("❌ В конфигурации нет слайдов")
             return "❌ Ошибка: В конфигурации нет слайдов"
+
+        logger.debug(f"📊 Загружено слайдов: {len(config.slides)}")
 
         # Настройка компонентов
         # ВАЖНО: Для MCP шаблоны ищем в директории сервера, а не JSON!
         server_dir = Path(__file__).parent  # Директория где лежит mcp_server.py
+        logger.debug(f"🏠 Директория сервера: {server_dir}")
+        
         resolver = PathResolver(config_file)
         loader = ResourceLoader(resolver)
         registry = LayoutRegistry()
         register_default_layouts(registry)
+        logger.debug("🔧 Компоненты инициализированы")
 
         # Создаём презентацию
         builder = PresentationBuilder(registry, loader, verbose=False)
@@ -142,19 +163,24 @@ def generate_presentation(config_path: str) -> str:
             # Относительный путь - ищем в директории сервера
             template_path = (server_dir / template_path_from_config).resolve()
 
+        logger.debug(f"📄 Путь к шаблону: {template_path}")
+
         if not template_path.exists():
+            logger.error(f"❌ Шаблон не найден: {template_path}")
             return (
                 f"❌ Ошибка: Шаблон не найден\n"
                 f"📁 Искал здесь: {template_path}\n"
                 f"🔍 Указано в JSON: {config.template_path}\n"
-                f"� Директория сервера: {server_dir}\n"
+                f"🏠 Директория сервера: {server_dir}\n"
                 f"💡 Шаблоны должны лежать в директории MCP сервера"
             )
 
         # Собираем презентацию
+        logger.debug(f"🔨 Начало сборки презентации")
         prs = builder.build(config, template_path)
 
         if prs is None:
+            logger.critical("💥 Критическая ошибка при сборке презентации")
             return "❌ Критическая ошибка при сборке презентации"
 
         # Сохраняем
@@ -166,6 +192,7 @@ def generate_presentation(config_path: str) -> str:
             # Относительный путь - сохраняем в директории сервера
             output_path = (server_dir / output_path_from_config).resolve()
 
+        logger.debug(f"💾 Сохранение презентации: {output_path}")
         builder.save(prs, output_path)
 
         # Проверяем на некритичные ошибки
@@ -173,6 +200,7 @@ def generate_presentation(config_path: str) -> str:
 
         # Формируем ответ
         if errors:
+            logger.warning(f"⚠️ Презентация создана с {len(errors)} ошибками")
             # Есть ошибки - показываем их ПОДРОБНО
             error_details = "\n".join([f"  • {err}" for err in errors])
             result = (
@@ -185,6 +213,7 @@ def generate_presentation(config_path: str) -> str:
             )
         else:
             # Всё идеально
+            logger.info(f"✅ MCP ответ: Успех. Презентация создана: {output_path}")
             result = (
                 f"✅ Презентация успешно создана!\n"
                 f"📁 Файл: {output_path}\n"
@@ -195,12 +224,16 @@ def generate_presentation(config_path: str) -> str:
         return result
 
     except FileNotFoundError as e:
+        logger.error(f"❌ MCP ответ: Файл не найден - {e}", exc_info=True)
         return f"❌ Файл не найден: {e}"
     except ValueError as e:
+        logger.error(f"❌ MCP ответ: Ошибка в конфигурации - {e}", exc_info=True)
         return f"❌ Ошибка в конфигурации: {e}"
     except PermissionError as e:
+        logger.error(f"❌ MCP ответ: Нет прав доступа - {e}", exc_info=True)
         return f"❌ Нет прав доступа: {e}"
     except Exception as e:
+        logger.critical(f"💥 MCP ответ: Неожиданная ошибка - {type(e).__name__}: {e}", exc_info=True)
         return f"❌ Неожиданная ошибка: {type(e).__name__}: {e}"
 
 
@@ -214,8 +247,8 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
 
     Args:
         layout_name: Имя конкретного макета (single_wide, single_tall, two_stack,
-                    two_tall_row, three_stack) или None для получения всей документации.
-                    Также можно указать "all" для полной документации.
+                    two_tall_row, three_stack, title_youtube) или None для получения
+                    всей документации. Также можно указать "all" для полной документации.
 
     Returns:
         Markdown-форматированная документация.
@@ -226,17 +259,23 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
         - two_stack: два изображения вертикально
         - two_tall_row: два высоких изображения горизонтально
         - three_stack: три изображения вертикально
+        - title_youtube: титульный слайд YouTube (квадратный логотип + title/subtitle/series_number)
 
     Examples:
         get_layout_documentation("single_wide")  # документация по single_wide
+        get_layout_documentation("title_youtube")  # документация по YouTube титру
         get_layout_documentation("all")          # вся документация
         get_layout_documentation()               # вся документация (default)
     """
+    logger.info(f"📚 MCP запрос: get_layout_documentation({layout_name or 'all'})")
+    
     try:
         # Определяем базовую директорию (где находится mcp_server.py)
         base_dir = Path(__file__).parent
         doc_dir = base_dir / "doc"
         layouts_dir = doc_dir / "layouts"
+        
+        logger.debug(f"📁 Директория документации: {doc_dir}")
 
         # Доступные макеты
         available_layouts = [
@@ -245,16 +284,19 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
             "two_stack",
             "two_tall_row",
             "three_stack",
+            "title_youtube",
         ]
 
         # Если запрашивается вся документация или layout_name не указан
         if layout_name is None or layout_name.lower() == "all":
+            logger.debug("📖 Запрошена полная документация по всем макетам")
             # Собираем полную документацию
             result = []
 
             # Сначала добавляем общую информацию
             overview_path = doc_dir / "overview.md"
             if overview_path.exists():
+                logger.debug(f"📄 Загрузка overview.md")
                 result.append(overview_path.read_text(encoding="utf-8"))
                 result.append("\n\n---\n\n")
 
@@ -264,17 +306,23 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
             for i, layout in enumerate(available_layouts, 1):
                 layout_file = layouts_dir / f"{layout}.md"
                 if layout_file.exists():
+                    logger.debug(f"📄 Загрузка {layout}.md ({i}/{len(available_layouts)})")
                     result.append(f"\n\n## Макет {i}/{len(available_layouts)}\n\n")
                     result.append(layout_file.read_text(encoding="utf-8"))
                     result.append("\n\n---\n")
                 else:
+                    logger.warning(f"⚠️ Документация для {layout} не найдена")
                     result.append(f"\n\n⚠️ Документация для `{layout}` не найдена.\n\n")
 
+            logger.info(f"✅ Полная документация собрана ({len(available_layouts)} макетов)")
             return "".join(result)
 
         # Если запрашивается конкретный макет
         else:
+            logger.debug(f"📖 Запрошена документация для макета: {layout_name}")
+            
             if layout_name not in available_layouts:
+                logger.warning(f"⚠️ Макет '{layout_name}' не найден в списке доступных")
                 return (
                     f"❌ Макет '{layout_name}' не найден.\n\n"
                     f"Доступные макеты:\n"
@@ -284,13 +332,18 @@ def get_layout_documentation(layout_name: str | None = None) -> str:
             layout_file = layouts_dir / f"{layout_name}.md"
 
             if not layout_file.exists():
+                logger.error(f"❌ Файл документации не найден: {layout_file}")
                 return (
                     f"❌ Файл документации для '{layout_name}' не найден: {layout_file}"
                 )
 
-            return layout_file.read_text(encoding="utf-8")
+            logger.debug(f"📄 Загрузка файла: {layout_file.name}")
+            content = layout_file.read_text(encoding="utf-8")
+            logger.info(f"✅ Документация для '{layout_name}' загружена успешно")
+            return content
 
     except Exception as e:
+        logger.error(f"❌ Ошибка при чтении документации: {type(e).__name__}: {e}", exc_info=True)
         return f"❌ Ошибка при чтении документации: {type(e).__name__}: {e}"
 
 

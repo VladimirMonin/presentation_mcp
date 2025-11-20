@@ -5,9 +5,12 @@
 удаляя все элементы форматирования, но сохраняя структуру и читаемость.
 """
 
+import logging
 import markdown
 from bs4 import BeautifulSoup
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 def clean_markdown_for_notes(md_text: str) -> str:
@@ -42,11 +45,16 @@ def clean_markdown_for_notes(md_text: str) -> str:
         Другой
     """
     if not md_text:
+        logger.debug("🧹 Пустой входной текст, возвращаем пустую строку")
         return ""
+
+    input_length = len(md_text)
+    logger.debug(f"🧹 Очистка Markdown, длина входа: {input_length} символов")
 
     try:
         # Шаг 1: Конвертируем Markdown в HTML
         html = markdown.markdown(md_text)
+        logger.debug(f"🔧 Markdown → HTML: {len(html)} символов")
 
         # Шаг 2: Парсим HTML с BeautifulSoup
         soup = BeautifulSoup(html, "html.parser")
@@ -59,12 +67,15 @@ def clean_markdown_for_notes(md_text: str) -> str:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         clean_text = "\n".join(lines)
 
+        output_length = len(clean_text)
+        logger.debug(f"✨ Очистка завершена, длина выхода: {output_length} символов")
+
         return clean_text
 
     except Exception as e:
         # В случае ошибки возвращаем исходный текст
         # (лучше показать что-то, чем ничего)
-        print(f"⚠ Ошибка очистки Markdown: {e}")
+        logger.error(f"❌ Ошибка очистки Markdown: {e}", exc_info=True)
         return md_text
 
 
@@ -90,7 +101,10 @@ def clean_markdown_preserve_structure(md_text: str) -> str:
         Второй параграф.
     """
     if not md_text:
+        logger.debug("🧹 Пустой входной текст (preserve_structure)")
         return ""
+
+    logger.debug(f"🧹 Очистка Markdown с сохранением структуры, длина: {len(md_text)} символов")
 
     try:
         html = markdown.markdown(md_text)
@@ -106,10 +120,12 @@ def clean_markdown_preserve_structure(md_text: str) -> str:
                 blocks.append(text)
 
         # Соединяем блоки двойным переводом строки
-        return "\n\n".join(blocks)
+        result = "\n\n".join(blocks)
+        logger.debug(f"✨ Очистка с сохранением структуры завершена: {len(result)} символов")
+        return result
 
     except Exception as e:
-        print(f"⚠ Ошибка очистки Markdown: {e}")
+        logger.error(f"❌ Ошибка очистки Markdown (preserve_structure): {e}", exc_info=True)
         return md_text
 
 
@@ -129,7 +145,10 @@ def validate_markdown(md_text: str) -> Optional[str]:
         >>> if error:
         ...     print(f"Ошибка: {error}")
     """
+    logger.debug(f"🔍 Валидация Markdown, длина: {len(md_text) if md_text else 0} символов")
+    
     if not md_text:
+        logger.warning("⚠️ Валидация: пустой текст")
         return "Пустой текст"
 
     try:
@@ -138,12 +157,16 @@ def validate_markdown(md_text: str) -> Optional[str]:
 
         # Базовая проверка результата
         if not html or html.isspace():
+            logger.warning("⚠️ Валидация: Markdown преобразовался в пустой HTML")
             return "Markdown преобразовался в пустой HTML"
 
+        logger.debug("✅ Валидация Markdown успешна")
         return None  # Всё ОК
 
     except Exception as e:
-        return f"Ошибка парсинга: {str(e)}"
+        error_msg = f"Ошибка парсинга: {str(e)}"
+        logger.error(f"❌ Валидация Markdown: {error_msg}", exc_info=True)
+        return error_msg
 
 
 # Тестовые кейсы (для документации и проверки)

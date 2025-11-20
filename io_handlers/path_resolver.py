@@ -5,8 +5,11 @@
 Относительные пути разрешаются относительно директории JSON конфигурации.
 """
 
+import logging
 from pathlib import Path
 from typing import Union
+
+logger = logging.getLogger(__name__)
 
 
 class PathResolver:
@@ -78,9 +81,14 @@ class PathResolver:
         path_obj = Path(path)
 
         if path_obj.is_absolute():
-            return path_obj.resolve()
+            result = path_obj.resolve()
         else:
-            return (self.config_dir / path_obj).resolve()
+            result = (self.config_dir / path_obj).resolve()
+
+        logger.debug(
+            f'🗂️ Резолюция пути: Input="{path}" | Base="{self.config_dir}" | Result="{result}"'
+        )
+        return result
 
     def resolve_and_check(self, path: Union[str, Path]) -> Path:
         """
@@ -104,6 +112,7 @@ class PathResolver:
         resolved = self.resolve(path)
 
         if not resolved.exists():
+            logger.warning(f"⚠️ Файл не найден: {resolved} (исходный путь: {path})")
             raise FileNotFoundError(
                 f"Файл не найден: {resolved}\n"
                 f"Исходный путь: {path}\n"
@@ -134,8 +143,12 @@ class PathResolver:
         path_obj = Path(path).resolve()
 
         try:
-            return path_obj.relative_to(self.config_dir)
-        except ValueError:
-            raise ValueError(
-                f"Путь {path_obj} находится вне директории конфигурации {self.config_dir}"
+            relative_path = path_obj.relative_to(self.config_dir)
+            logger.debug(
+                f'🔄 Обратная резолюция: Absolute="{path_obj}" -> Relative="{relative_path}"'
             )
+            return relative_path
+        except ValueError:
+            error_msg = f"Путь {path_obj} находится вне директории конфигурации {self.config_dir}"
+            logger.error(f"❌ {error_msg}")
+            raise ValueError(error_msg)
