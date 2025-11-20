@@ -400,9 +400,11 @@ class PresentationBuilder:
                 width_cm = Cm(width) if width is not None else None
                 height_cm = Cm(height) if height is not None else None
                 
+                width_str = f"{width:.2f}" if width is not None else "auto"
+                height_str = f"{height:.2f}" if height is not None else "auto"
                 logger.debug(
                     f"📐 Вычислено (см): left={placement_dict['left']:.2f}, top={placement_dict['top']:.2f}, "
-                    f"w={width:.2f if width else 'auto'}, h={height:.2f if height else 'auto'}"
+                    f"w={width_str}, h={height_str}"
                 )
                 
                 # EMU для детального логирования

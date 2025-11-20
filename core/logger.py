@@ -15,6 +15,28 @@ from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 
+class SafeConsoleHandler(logging.StreamHandler):
+    """
+    StreamHandler с защитой от UnicodeEncodeError в Windows console (cp1251).
+    При ошибке кодировки заменяет символы на '?' вместо краша.
+    """
+
+    def emit(self, record):
+        try:
+            super().emit(record)
+        except UnicodeEncodeError:
+            # Fallback: заменяем непечатаемые символы (эмодзи) на '?'
+            try:
+                msg = self.format(record)
+                safe_msg = msg.encode(
+                    self.stream.encoding or "utf-8", errors="replace"
+                ).decode(self.stream.encoding or "utf-8")
+                self.stream.write(safe_msg + self.terminator)
+                self.flush()
+            except Exception:
+                self.handleError(record)
+
+
 def setup_logging(verbose: bool = False, log_dir: str = "logs"):
     """
     Настраивает глобальный логгер приложения.
@@ -49,8 +71,8 @@ def setup_logging(verbose: bool = False, log_dir: str = "logs"):
     # Очищаем существующие хендлеры (чтобы не дублировались при перезапуске)
     root_logger.handlers.clear()
 
-    # --- HANDLER 1: CONSOLE ---
-    console_handler = logging.StreamHandler(sys.stdout)
+    # --- HANDLER 1: CONSOLE (с защитой от emoji в Windows) ---
+    console_handler = SafeConsoleHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG if verbose else logging.INFO)
 
     # В verbose режиме показываем полный формат, иначе упрощенный

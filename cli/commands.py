@@ -63,7 +63,7 @@ def cmd_generate(
 
         # Шаг 2: Настройка компонентов
         logger.debug("🔧 Инициализация компонентов")
-        resolver = PathResolver(config_path_obj)
+        resolver = PathResolver(config_path_obj)  # Для ресурсов (images, audio)
         loader = ResourceLoader(resolver)
         registry = LayoutRegistry()
         register_default_layouts(registry)
@@ -71,7 +71,13 @@ def cmd_generate(
         # Шаг 3: Сборка презентации
         builder = PresentationBuilder(registry, loader, verbose=verbose)
 
-        template_path = resolver.resolve(config.template_path)
+        # Шаблон резолвим от ТЕКУЩЕЙ директории (откуда запущен CLI)
+        template_path = Path(config.template_path)
+        if not template_path.is_absolute():
+            template_path = Path.cwd() / template_path
+        template_path = template_path.resolve()
+        
+        logger.debug(f"📄 Путь к шаблону (от CWD): {template_path}")
 
         if not template_path.exists():
             logger.error(f"❌ Шаблон не найден: {template_path}")
@@ -84,7 +90,13 @@ def cmd_generate(
             return 1
 
         # Шаг 4: Сохранение
-        output_path = resolver.resolve(config.output_path)
+        # Output тоже от текущей директории
+        output_path = Path(config.output_path)
+        if not output_path.is_absolute():
+            output_path = Path.cwd() / output_path
+        output_path = output_path.resolve()
+        
+        logger.debug(f"💾 Путь к выходному файлу (от CWD): {output_path}")
         builder.save(prs, output_path)
 
         # Проверка на ошибки
