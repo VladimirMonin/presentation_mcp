@@ -48,3 +48,4 @@ images/
 .DS_Store
 Thumbs.db
 
+logs/
