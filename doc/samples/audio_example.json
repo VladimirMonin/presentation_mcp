@@ -1,0 +1,41 @@
+{
+  "template_path": "templates/youtube_base.pptx",
+  "layout_name": "VideoLayout",
+  "output_path": "presentation_with_audio.pptx",
+  "slides": [
+    {
+      "slide_type": "title_youtube",
+      "layout_type": "title_youtube",
+      "layout_name": "TitleLayout",
+      "title": "Мой YouTube Канал",
+      "subtitle": "Презентация с озвучкой",
+      "series_number": "Часть 1",
+      "notes_source": "Титульный слайд с аудио вступлением",
+      "images": ["channel_logo.png"],
+      "audio": "audio/intro.mp3"
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_wide",
+      "title": "Введение",
+      "notes_source": "Первый слайд с голосовой озвучкой",
+      "images": ["slide1.jpg"],
+      "audio": "audio/slide1_voiceover.mp3"
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "two_stack",
+      "title": "Примеры кода",
+      "notes_source": "Слайд без аудио - обычный контент",
+      "images": ["code_example1.png", "code_example2.png"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_wide",
+      "title": "Заключение",
+      "notes_source": "Финальный слайд с музыкальным фоном",
+      "images": ["conclusion.jpg"],
+      "audio": "audio/outro_music.wav"
+    }
+  ]
+}
