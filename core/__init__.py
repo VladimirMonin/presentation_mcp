@@ -7,6 +7,7 @@
 - Процессор изображений
 - Построитель презентаций
 - Система логирования
+- Размещение контента (placers)
 """
 
 from .logger import setup_logging
@@ -23,6 +24,7 @@ from .image_processor import (
 )
 from .presentation_builder import PresentationBuilder
 from .template_analyzer import analyze_template, list_layouts
+from .placers import ImagePlacer, MediaPlacer
 
 __all__ = [
     "setup_logging",
@@ -36,4 +38,6 @@ __all__ = [
     "PresentationBuilder",
     "analyze_template",
     "list_layouts",
+    "ImagePlacer",
+    "MediaPlacer",
 ]

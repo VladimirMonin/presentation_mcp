@@ -24,7 +24,8 @@
       "layout_type": "two_tall_row",
       "title": "Шаг 2: Открытие папки проекта",
       "notes_source": "После установки открываем VS Code и выбираем папку с проектом через меню File > Open Folder или через контекстное меню Windows.",
-      "images": ["images/2_1.webp", "images/2_2.webp"]
+      "images": ["images/2_1.webp", "images/2_2.webp"],
+      "audio": "images/test_audio_2.mp3"
     },
     {
       "layout_type": "single_wide",
