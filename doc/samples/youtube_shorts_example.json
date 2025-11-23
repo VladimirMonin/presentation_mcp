@@ -1,0 +1,43 @@
+{
+  "template_path": "templates/youtube_base_shorts.pptx",
+  "layout_name": "ShortsLayout",
+  "output_path": "youtube_shorts_demo.pptx",
+  "slides": [
+    {
+      "slide_type": "content",
+      "layout_type": "single_tall_shorts",
+      "title": "Введение",
+      "notes_source": "Добро пожаловать в наш YouTube Shorts! Сегодня мы покажем вам потрясающие возможности Python.",
+      "images": ["images/intro_vertical.png"]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "two_stack_shorts",
+      "title": "До и После",
+      "notes_source": "Посмотрите, как изменился код после рефакторинга. Верхнее изображение показывает исходную версию, нижнее - оптимизированную.",
+      "images": [
+        "images/code_before.png",
+        "images/code_after.png"
+      ]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "three_stack_shorts",
+      "title": "Три простых шага",
+      "notes_source": "Процесс установки состоит всего из трёх шагов: скачивание, установка и настройка.",
+      "images": [
+        "images/step1_download.png",
+        "images/step2_install.png",
+        "images/step3_configure.png"
+      ]
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "single_tall_shorts",
+      "title": "Результат",
+      "notes_source": "Вот что у нас получилось! Приложение работает стабильно и быстро.",
+      "images": ["images/final_result.png"],
+      "audio": "audio/narration.mp3"
+    }
+  ]
+}

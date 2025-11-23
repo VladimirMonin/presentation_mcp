@@ -110,6 +110,53 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
     )
     registry.register(title_youtube)
 
+    # === YouTube Shorts макеты (вертикальный формат 9:16) ===
+    # Шаблон: youtube_base_shorts.pptx (19.05 x 33.87 cm)
+
+    # Макет 7: Одно высокое изображение для Shorts
+    # Используется для вертикальных видео (TikTok, Instagram Reels, YouTube Shorts)
+    single_tall_shorts = LayoutBlueprint(
+        name="single_tall_shorts",
+        description="Одно высокое изображение для YouTube Shorts (вертикальный формат 9:16)",
+        required_images=1,
+        placements=[
+            ImagePlacement(left=1.5, top=3.0, max_width=16.05, max_height=29.87)
+        ],
+    )
+    registry.register(single_tall_shorts)
+
+    # Макет 8: Два изображения друг под другом для Shorts
+    # Используется для сравнения или последовательных кадров в вертикальном формате
+    two_stack_shorts = LayoutBlueprint(
+        name="two_stack_shorts",
+        description="Два изображения друг под другом для YouTube Shorts",
+        required_images=2,
+        placements=[
+            # Верхнее изображение
+            ImagePlacement(left=1.5, top=3.0, max_width=16.05, max_height=14.43),
+            # Нижнее изображение
+            ImagePlacement(left=1.5, top=18.43, max_width=16.05, max_height=14.43),
+        ],
+    )
+    registry.register(two_stack_shorts)
+
+    # Макет 9: Три изображения друг под другом для Shorts
+    # Используется для последовательности из трёх кадров в вертикальном формате
+    three_stack_shorts = LayoutBlueprint(
+        name="three_stack_shorts",
+        description="Три изображения друг под другом для YouTube Shorts",
+        required_images=3,
+        placements=[
+            # Верхнее изображение
+            ImagePlacement(left=1.5, top=3.0, max_width=16.05, max_height=9.42),
+            # Среднее изображение
+            ImagePlacement(left=1.5, top=13.22, max_width=16.05, max_height=9.42),
+            # Нижнее изображение
+            ImagePlacement(left=1.5, top=23.45, max_width=16.05, max_height=9.42),
+        ],
+    )
+    registry.register(three_stack_shorts)
+
 
 # Константы для работы с шаблоном
 DEFAULT_TEMPLATE_PATH = "template.pptx"
@@ -125,3 +172,12 @@ PLACEHOLDER_SLIDE_NUM_IDX = 11
 PLACEHOLDER_TITLE_LAYOUT_TITLE_IDX = 10
 PLACEHOLDER_TITLE_LAYOUT_SLIDE_NUM_IDX = 12
 PLACEHOLDER_TITLE_LAYOUT_SUBTITLE_IDX = 13
+
+# ID заполнителей в шаблоне youtube_base_shorts.pptx
+# ShortsLayout (контентные слайды для вертикального формата):
+# ПРИМЕЧАНИЕ: В текущей версии шаблона youtube_base_shorts.pptx
+# отсутствуют заполнители. Для полноценной работы необходимо
+# добавить их в PowerPoint в режиме Образца слайдов.
+# Рекомендуемые индексы:
+PLACEHOLDER_SHORTS_TITLE_IDX = 10
+PLACEHOLDER_SHORTS_SLIDE_NUM_IDX = 11
