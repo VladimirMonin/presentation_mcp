@@ -59,20 +59,25 @@
 
 ```python
 from pathlib import Path
-from io_handlers import ConfigLoader
+from io_handlers import ConfigLoader, ResourceLoader, PathResolver
 from models import LayoutRegistry
 from config import register_default_layouts
 from core import PresentationBuilder
 
 # Загрузка конфигурации
-config = ConfigLoader.load(Path("shorts_config.json"))
+config_path = Path("shorts_config.json")
+config = ConfigLoader.load(config_path)
+
+# Подготовка загрузчика ресурсов
+resolver = PathResolver(config_path)
+resource_loader = ResourceLoader(resolver)
 
 # Регистрация макетов
 registry = LayoutRegistry()
 register_default_layouts(registry)
 
 # Создание презентации
-builder = PresentationBuilder(registry, loader)
+builder = PresentationBuilder(registry, resource_loader)
 prs = builder.build(config, Path("templates/youtube_base_shorts.pptx"))
 builder.save(prs, Path("output.pptx"))
 ```

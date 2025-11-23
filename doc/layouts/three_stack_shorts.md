@@ -25,7 +25,7 @@
 | **Формат слайда** | 19.05 x 33.87 см (9:16 вертикальный) |
 | **Верхнее изображение** | left=1.5 см, top=3.0 см, max: 16.05 x 9.42 см |
 | **Среднее изображение** | left=1.5 см, top=13.22 см, max: 16.05 x 9.42 см |
-| **Нижнее изображение** | left=1.5 см, top=23.45 см, max: 16.05 x 9.42 см |
+| **Нижнее изображение** | left=1.5 см, top=23.44 см, max: 16.05 x 9.42 см |
 | **Зазор между изображениями** | 0.8 см |
 | **Шаблон** | `youtube_base_shorts.pptx` |
 | **Layout Name** | `ShortsLayout` |
@@ -61,20 +61,25 @@
 
 ```python
 from pathlib import Path
-from io_handlers import ConfigLoader
+from io_handlers import ConfigLoader, ResourceLoader, PathResolver
 from models import LayoutRegistry
 from config import register_default_layouts
 from core import PresentationBuilder
 
 # Загрузка конфигурации
-config = ConfigLoader.load(Path("shorts_config.json"))
+config_path = Path("shorts_config.json")
+config = ConfigLoader.load(config_path)
+
+# Подготовка загрузчика ресурсов
+resolver = PathResolver(config_path)
+resource_loader = ResourceLoader(resolver)
 
 # Регистрация макетов
 registry = LayoutRegistry()
 register_default_layouts(registry)
 
 # Создание презентации
-builder = PresentationBuilder(registry, loader)
+builder = PresentationBuilder(registry, resource_loader)
 prs = builder.build(config, Path("templates/youtube_base_shorts.pptx"))
 builder.save(prs, Path("output.pptx"))
 ```

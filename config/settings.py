@@ -132,9 +132,9 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
         description="Два изображения друг под другом для YouTube Shorts",
         required_images=2,
         placements=[
-            # Верхнее изображение
+            # Верхнее изображение: начало контентной области
             ImagePlacement(left=1.5, top=3.0, max_width=16.05, max_height=14.43),
-            # Нижнее изображение
+            # Нижнее изображение: верхнее (3.0) + высота (14.43) + зазор (1.0) = 18.43
             ImagePlacement(left=1.5, top=18.43, max_width=16.05, max_height=14.43),
         ],
     )
@@ -147,12 +147,12 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
         description="Три изображения друг под другом для YouTube Shorts",
         required_images=3,
         placements=[
-            # Верхнее изображение
+            # Верхнее изображение: начало контентной области
             ImagePlacement(left=1.5, top=3.0, max_width=16.05, max_height=9.42),
-            # Среднее изображение
+            # Среднее изображение: верхнее (3.0) + высота (9.42) + зазор (0.8) = 13.22
             ImagePlacement(left=1.5, top=13.22, max_width=16.05, max_height=9.42),
-            # Нижнее изображение
-            ImagePlacement(left=1.5, top=23.45, max_width=16.05, max_height=9.42),
+            # Нижнее изображение: среднее (13.22) + высота (9.42) + зазор (0.8) = 23.44
+            ImagePlacement(left=1.5, top=23.44, max_width=16.05, max_height=9.42),
         ],
     )
     registry.register(three_stack_shorts)
