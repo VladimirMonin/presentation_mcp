@@ -251,8 +251,8 @@ class PresentationBuilder:
             title_ph.text_frame.text = cfg.title
             logger.debug(f"🔧 Title установлен в placeholder idx={idx_title}")
         except KeyError:
-            logger.error(f"❌ Заполнитель заголовка idx={idx_title} не найден")
-            raise KeyError(f"Заполнитель заголовка с индексом {idx_title} не найден")
+            # ИЗМЕНЕНИЕ: Не падаем, если это слайд без заголовка (например, Shorts)
+            logger.debug(f"⚠️ Заполнитель заголовка idx={idx_title} не найден (пропуск для графического слайда)")
 
         # 2. Дополнительные поля для YouTubeTitleSlideConfig
         if is_title_layout:
