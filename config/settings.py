@@ -110,6 +110,19 @@ def register_default_layouts(registry: LayoutRegistry) -> None:
     )
     registry.register(title_youtube)
 
+    # Макет 7: YouTube Shorts (На весь экран)
+    # Используется для вертикальных видео (TikTok, YouTube Shorts, Instagram Reels)
+    shorts_fullscreen = LayoutBlueprint(
+        name="shorts_fullscreen",
+        description="Вертикальное изображение на весь слайд (9:16)",
+        required_images=1,
+        placements=[
+            # Полное покрытие слайда 19.05 x 33.867 см
+            ImagePlacement(left=0.0, top=0.0, max_width=19.05, max_height=33.867)
+        ],
+    )
+    registry.register(shorts_fullscreen)
+
 
 # Константы для работы с шаблоном
 DEFAULT_TEMPLATE_PATH = "template.pptx"
