@@ -1,0 +1,31 @@
+{
+  "template_path": "templates/youtube_base_shorts.pptx",
+  "layout_name": "ShortsLayout",
+  "output_path": "shorts_presentation.pptx",
+  "slides": [
+    {
+      "slide_type": "content",
+      "layout_type": "shorts_fullscreen",
+      "title": "Intro Slide",
+      "notes_source": "",
+      "images": ["vertical_intro_1080x1920.png"],
+      "audio": "voiceover_intro.mp3"
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "shorts_fullscreen",
+      "title": "Main Content",
+      "notes_source": "",
+      "images": ["vertical_content_1080x1920.png"],
+      "audio": "voiceover_main.mp3"
+    },
+    {
+      "slide_type": "content",
+      "layout_type": "shorts_fullscreen",
+      "title": "Call to Action",
+      "notes_source": "",
+      "images": ["vertical_cta_1080x1920.png"],
+      "audio": "voiceover_cta.mp3"
+    }
+  ]
+}
